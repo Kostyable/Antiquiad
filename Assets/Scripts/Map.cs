@@ -14,27 +14,33 @@ public class Map : MonoBehaviour
     private int _seed;
     private int _seed2;
     private float _scale;
+    private float _scale2;
+    private float[,] _alitudes;
+    private float[,] _latitudes;
     [SerializeField] private int smoothingDegree;
     [SerializeField] private GameObject pentagonPrefab;
 
     private void Awake()
     {
+        _grid = new GameObject[size.y, size.x];
         _offsetLeft = new Vector2(4.56f, 1.31f);
         _offsetRight = new Vector2(1.32f, 0.35f);
         _offsetBottom = new Vector2(3.25f, 0.35f);
+        _origin.y = size.y / 2;
+        _origin.x = size.x / 2 - size.y / 4;
+        _center = GetRealCoordinates(_origin.x + (_origin.x - 1) / 2, _origin.y);
         _seed = Random.Range(1, 100000);
         _seed2 = Random.Range(1, 100000);
         _scale = 20f;
-        _origin.y = size.y / 2;
-        _origin.x = size.x / 2 - size.y / 4;
-        _center = ToRealCoordinates(_origin.x + (int)((_origin.x - 1) / 2), _origin.y);
-        _grid = new GameObject[size.y, size.x];
+        _scale2 = 25f;
+        _alitudes = new float[size.y, size.x];
+        _latitudes = new float[size.y, size.x];
         for (int i = 0; i < size.y; i++)
         {
             for (int j = 0; j < size.x; j++)
             {
-                _grid[i, j] = Instantiate(pentagonPrefab, ToRealCoordinates(j, i), GetAngle(j, i), transform);
-                _grid[i, j].GetComponent<Pentagon>().Init(ToAxialCoordinates(j, i), GetType(j, i));
+                _grid[i, j] = Instantiate(pentagonPrefab, GetRealCoordinates(j, i), GetAngle(j, i), transform);
+                _grid[i, j].GetComponent<Pentagon>().Init(j, i, GetType(j, i));
             }
         }
         gameObject.GetComponent<Transform>().position -= (Vector3)_center; 
@@ -48,34 +54,29 @@ public class Map : MonoBehaviour
         Generate();
         Smooth();
     }
-
-    private Vector2Int ToAxialCoordinates(int j, int i)
-    {
-        return new Vector2Int(_origin.x + _origin.y - j - i + (int)(i / 2), i - _origin.y);
-    }
     
-    private Vector2 ToRealCoordinates(int x, int y)
+    private Vector2 GetRealCoordinates(int x, int y)
     {
         if (y % 2 == 0)
         {
             switch (x % 3)
             {
                 case 0:
-                    return new Vector2(_offsetLeft.x * (int)(x / 3), -(_offsetLeft.y * y));
+                    return new Vector2(_offsetLeft.x * (x / 3), -(_offsetLeft.y * y));
                 case 1:
-                    return new Vector2(_offsetLeft.x * (int)(x / 3) + _offsetRight.x, -(_offsetLeft.y * y) + _offsetRight.y);
+                    return new Vector2(_offsetLeft.x * (x / 3) + _offsetRight.x, -(_offsetLeft.y * y) + _offsetRight.y);
                 default:
-                    return new Vector2(_offsetLeft.x * (int)(x / 3) + _offsetBottom.x, -(_offsetLeft.y * y) + _offsetBottom.y);
+                    return new Vector2(_offsetLeft.x * (x / 3) + _offsetBottom.x, -(_offsetLeft.y * y) + _offsetBottom.y);
             }
         }
         switch ((x + 2) % 3)
         {
             case 0:
-                return new Vector2(_offsetLeft.x * (int)((x + 2) / 3) - _offsetLeft.x / 2, -(_offsetLeft.y * y));
+                return new Vector2(_offsetLeft.x * ((x + 2) / 3) - _offsetLeft.x / 2, -(_offsetLeft.y * y));
             case 1:
-                return new Vector2(_offsetLeft.x * (int)((x + 2) / 3) + _offsetRight.x - _offsetLeft.x / 2, -(_offsetLeft.y * y) + _offsetRight.y);
+                return new Vector2(_offsetLeft.x * ((x + 2) / 3) + _offsetRight.x - _offsetLeft.x / 2, -(_offsetLeft.y * y) + _offsetRight.y);
             default:
-                return new Vector2(_offsetLeft.x * (int)((x + 2) / 3) + _offsetBottom.x - _offsetLeft.x / 2, -(_offsetLeft.y * y) + _offsetBottom.y);
+                return new Vector2(_offsetLeft.x * ((x + 2) / 3) + _offsetBottom.x - _offsetLeft.x / 2, -(_offsetLeft.y * y) + _offsetBottom.y);
         }
     }
     
@@ -131,10 +132,6 @@ public class Map : MonoBehaviour
 
     private void Generate()
     {
-        float x;
-        float y;
-        float[,] alitudes = new float[size.y, size.x];
-        float[,] latitudes = new float[size.y, size.x];
         float minal = 2f;
         float maxal = -1f;
         float minlat = 2f;
@@ -143,43 +140,43 @@ public class Map : MonoBehaviour
         {
             for (int j = 0; j < size.x; j++)
             {
-                x = (j + _seed) / _scale;
-                y = (i + _seed) / _scale;
-                alitudes[i, j] = Mathf.PerlinNoise(x, y) + 0.3f - 0.3f * (float)Math.Pow(GetDistance(j, i), 2f);
-                x = (j + _seed2) / _scale;
-                y = (i + _seed2) / _scale;
-                latitudes[i, j] = (Mathf.PerlinNoise(x, y) + 1f) / 2f - (float)GetLatitude(i) + 0.3f;
-                if (alitudes[i, j] < 0f)
+                var x = (j + _seed) / _scale;
+                var y = (i + _seed) / _scale;
+                _alitudes[i, j] = Mathf.PerlinNoise(x, y) + 0.1f - 0.3f * (float)Math.Pow(GetDistance(j, i), 2f);
+                x = (j + _seed2) / _scale2;
+                y = (i + _seed2) / _scale2;
+                _latitudes[i, j] = Mathf.PerlinNoise(x, y);
+                if (_alitudes[i, j] < 0f)
                 {
-                    alitudes[i, j] = 0f;
+                    _alitudes[i, j] = 0f;
                 }
-                else if (alitudes[i, j] > 1f)
+                else if (_alitudes[i, j] > 1f)
                 {
-                    alitudes[i, j] = 1f;
+                    _alitudes[i, j] = 1f;
                 }
-                if (latitudes[i, j] < 0f)
+                if (_latitudes[i, j] < 0f)
                 {
-                    latitudes[i, j] = 0f;
+                    _latitudes[i, j] = 0f;
                 }
-                else if (latitudes[i, j] > 1f)
+                else if (_latitudes[i, j] > 1f)
                 {
-                    latitudes[i, j] = 1f;
+                    _latitudes[i, j] = 1f;
                 }
-                if (alitudes[i, j] < minal)
+                if (_alitudes[i, j] < minal)
                 {
-                    minal = alitudes[i, j];
+                    minal = _alitudes[i, j];
                 }
-                else if (alitudes[i, j] > maxal)
+                else if (_alitudes[i, j] > maxal)
                 {
-                    maxal = alitudes[i, j];
+                    maxal = _alitudes[i, j];
                 }
-                if (latitudes[i, j] < minlat)
+                if (_latitudes[i, j] < minlat)
                 {
-                    minlat = latitudes[i, j];
+                    minlat = _latitudes[i, j];
                 }
-                else if (latitudes[i, j] > maxlat)
+                else if (_latitudes[i, j] > maxlat)
                 {
-                    maxlat = latitudes[i, j];
+                    maxlat = _latitudes[i, j];
                 }
             }
         }
@@ -187,21 +184,21 @@ public class Map : MonoBehaviour
         {
             for (int j = 0; j < size.x; j++)
             {
-                if (alitudes[i, j] < minal + 0.5f)
+                if (_alitudes[i, j] < minal + 0.3f)
                 {
                     _grid[i, j].GetComponent<Pentagon>().terrain = Terrain.Water;
                 }
-                else if (alitudes[i, j] > maxal - 0.07f)
+                else if (_alitudes[i, j] > maxal - 0.15f)
                 {
                     _grid[i, j].GetComponent<Pentagon>().terrain = Terrain.Mountains;
                 }
                 else
                 {
-                    if (latitudes[i, j] < minlat + 0.4f)
+                    if (_latitudes[i, j] < minlat + 0.3f)
                     {
                         _grid[i, j].GetComponent<Pentagon>().terrain = Terrain.Forest;
                     }
-                    else if (latitudes[i, j] > maxlat - 0.05f)
+                    else if (_latitudes[i, j] > maxlat - 0.2f)
                     {
                         _grid[i, j].GetComponent<Pentagon>().terrain = Terrain.Desert;
                     }
@@ -213,127 +210,45 @@ public class Map : MonoBehaviour
                 SetSprite(_grid[i, j]);
             }
         }
+        //Debug.Log(minal + " " + maxal + " " + minlat + " " + maxlat);
     }
     
-    private double GetDistance(int x, int y)
+    private float GetDistance(int x, int y)
     {
-        double distX = Math.Abs(x - size.x / 2 + 1) / (double)(size.x / 2);
-        double distY = Math.Abs(y - size.y / 2 + 1) / (double)(size.y / 2);
-        return Math.Sqrt(Math.Pow(distX, 2) + Math.Pow(distY, 2));
-    }
-    
-    private double GetLatitude(int y)
-    {
-        double currentY = Math.Abs(y - size.y / 2 + 1) / (double)(size.y / 2);
-        return currentY;
+        float distX = Math.Abs(x - size.x / 2) / (float)(size.x / 2);
+        float distY = Math.Abs(y - size.y / 2) / (float)(size.y / 2);
+        return (float)Math.Sqrt(Math.Pow(distX, 2) + Math.Pow(distY, 2));
     }
 
     private void SetNeighbors(Pentagon pentagon)
     {
-        pentagon.neighbors = new Pentagon[6];
-        if (pentagon.axialCoordinates.y == (int)(-size.y / 2))
+        if (pentagon.offsetCoordinates.x % 2 == 0)
         {
-            if (pentagon.axialCoordinates.x == size.y - (int)(size.y / 4) - (int)(pentagon.axialCoordinates.y / 2))
-            {
-                pentagon.neighbors[1] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y));
-                pentagon.neighbors[2] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y + 1));
-            }
-            else if (pentagon.axialCoordinates.x == -size.y + (int)(size.y / 4) - (int)(pentagon.axialCoordinates.y / 2))
-            {
-                pentagon.neighbors[2] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y + 1));
-                pentagon.neighbors[3] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y + 1));
-                pentagon.neighbors[4] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y));
-            }
-            else
-            {
-                pentagon.neighbors[1] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y));
-                pentagon.neighbors[2] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y + 1));
-                pentagon.neighbors[3] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y + 1));
-                pentagon.neighbors[4] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y));
-            }
-        }
-        else if (pentagon.axialCoordinates.y == (int)(size.y / 2))
-        {
-            if (pentagon.axialCoordinates.x == size.y - (int)(size.y / 4) - (int)(pentagon.axialCoordinates.y / 2))
-            {
-                pentagon.neighbors[0] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y - 1));
-                pentagon.neighbors[1] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y));
-            }
-            else if (pentagon.axialCoordinates.x == -size.y + (int)(size.y / 4) - (int)(pentagon.axialCoordinates.y / 2))
-            {
-                pentagon.neighbors[0] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y - 1));
-                pentagon.neighbors[4] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y));
-                pentagon.neighbors[5] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y - 1));
-            }
-            else
-            {
-                pentagon.neighbors[0] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y - 1));
-                pentagon.neighbors[1] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y));
-                pentagon.neighbors[4] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y));
-                pentagon.neighbors[5] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y - 1));
-            }
+            pentagon.neighbors[0] = IsCellExist(pentagon.offsetCoordinates.x, pentagon.offsetCoordinates.y - 1);
+            pentagon.neighbors[1] = IsCellExist(pentagon.offsetCoordinates.x + 1, pentagon.offsetCoordinates.y);
+            pentagon.neighbors[2] = IsCellExist(pentagon.offsetCoordinates.x, pentagon.offsetCoordinates.y + 1);
+            pentagon.neighbors[3] = IsCellExist(pentagon.offsetCoordinates.x - 1, pentagon.offsetCoordinates.y + 1);
+            pentagon.neighbors[4] = IsCellExist(pentagon.offsetCoordinates.x - 1, pentagon.offsetCoordinates.y);
+            pentagon.neighbors[5] = IsCellExist(pentagon.offsetCoordinates.x - 1, pentagon.offsetCoordinates.y - 1);
         }
         else
         {
-            if (pentagon.axialCoordinates.x == size.y - (int)(size.y / 4) - (int)(pentagon.axialCoordinates.y / 2))
-            {
-                if (pentagon.axialCoordinates.y % 2 == 0)
-                {
-                    pentagon.neighbors[0] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y - 1));
-                    pentagon.neighbors[1] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y));
-                    pentagon.neighbors[2] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y + 1));
-                }
-                else
-                {
-                    pentagon.neighbors[0] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y - 1));
-                    pentagon.neighbors[1] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y));
-                    pentagon.neighbors[2] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y + 1));
-                    pentagon.neighbors[3] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y + 1));
-                    pentagon.neighbors[5] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y - 1));
-                }
-            }
-            else if (pentagon.axialCoordinates.x == -size.y + (int)(size.y / 4) - (int)(pentagon.axialCoordinates.y / 2))
-            {
-                if (pentagon.axialCoordinates.y % 2 == 0)
-                {
-                    pentagon.neighbors[0] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y - 1));
-                    pentagon.neighbors[2] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y + 1));
-                    pentagon.neighbors[3] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y + 1));
-                    pentagon.neighbors[4] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y));
-                    pentagon.neighbors[5] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y - 1));
-                }
-                else
-                {
-                    pentagon.neighbors[3] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y + 1));
-                    pentagon.neighbors[4] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y));
-                    pentagon.neighbors[5] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y - 1));
-                }
-            }
-            else
-            {
-                pentagon.neighbors[0] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y - 1));
-                pentagon.neighbors[1] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y));
-                pentagon.neighbors[2] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x - 1, pentagon.axialCoordinates.y + 1));
-                pentagon.neighbors[3] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x, pentagon.axialCoordinates.y + 1));
-                pentagon.neighbors[4] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y));
-                pentagon.neighbors[5] = FindNeighbor(new Vector2Int(pentagon.axialCoordinates.x + 1, pentagon.axialCoordinates.y - 1));
-            }
+            pentagon.neighbors[0] = IsCellExist(pentagon.offsetCoordinates.x + 1, pentagon.offsetCoordinates.y - 1);
+            pentagon.neighbors[1] = IsCellExist(pentagon.offsetCoordinates.x + 1, pentagon.offsetCoordinates.y);
+            pentagon.neighbors[2] = IsCellExist(pentagon.offsetCoordinates.x + 1, pentagon.offsetCoordinates.y + 1);
+            pentagon.neighbors[3] = IsCellExist(pentagon.offsetCoordinates.x, pentagon.offsetCoordinates.y + 1);
+            pentagon.neighbors[4] = IsCellExist(pentagon.offsetCoordinates.x - 1, pentagon.offsetCoordinates.y);
+            pentagon.neighbors[5] = IsCellExist(pentagon.offsetCoordinates.x, pentagon.offsetCoordinates.y - 1);
         }
     }
     
-    private Pentagon FindNeighbor(Vector2Int axialCoordinates)
+    private Pentagon IsCellExist(int x, int y)
     {
-        for (int i = 0; i < size.y; i++)
+        if (x < 0 || x >= size.x || y < 0 || y >= size.y)
         {
-            for (int j = 0; j < size.x; j++)
-            {
-                if (_grid[i, j].GetComponent<Pentagon>().axialCoordinates == axialCoordinates)
-                {
-                    return _grid[i, j].GetComponent<Pentagon>();
-                }
-            }
+            return null;
         }
-        return _grid[0, 0].GetComponent<Pentagon>();
+        return _grid[y, x].GetComponent<Pentagon>();
     }
 
     private void Smooth()
