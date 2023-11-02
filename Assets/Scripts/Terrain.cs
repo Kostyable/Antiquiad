@@ -2,7 +2,10 @@
 {
     Water,
     Plain,
-    Mountains,
+    Forest,
     Desert,
-    Forest
+    Hills,
+    ForestHills,
+    DesertHills,
+    Mountains
 }

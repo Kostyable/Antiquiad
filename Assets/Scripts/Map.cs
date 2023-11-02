@@ -142,7 +142,7 @@ public class Map : MonoBehaviour
             {
                 var x = (j + _seed) / _scale;
                 var y = (i + _seed) / _scale;
-                _alitudes[i, j] = Mathf.PerlinNoise(x, y) + 0.1f - 0.3f * (float)Math.Pow(GetDistance(j, i), 2f);
+                _alitudes[i, j] = Mathf.PerlinNoise(x, y) + 0.3f - 0.3f * (float)Math.Pow(GetDistance(j, i), 2f);
                 x = (j + _seed2) / _scale2;
                 y = (i + _seed2) / _scale2;
                 _latitudes[i, j] = Mathf.PerlinNoise(x, y);
@@ -184,13 +184,28 @@ public class Map : MonoBehaviour
         {
             for (int j = 0; j < size.x; j++)
             {
-                if (_alitudes[i, j] < minal + 0.3f)
+                if (_alitudes[i, j] < minal + 0.5f)
                 {
                     _grid[i, j].GetComponent<Pentagon>().terrain = Terrain.Water;
                 }
-                else if (_alitudes[i, j] > maxal - 0.15f)
+                else if (_alitudes[i, j] > maxal - 0.02f)
                 {
                     _grid[i, j].GetComponent<Pentagon>().terrain = Terrain.Mountains;
+                }
+                else if (_alitudes[i, j] > maxal - 0.1f)
+                {
+                    if (_latitudes[i, j] < minlat + 0.3f)
+                    {
+                        _grid[i, j].GetComponent<Pentagon>().terrain = Terrain.ForestHills;
+                    }
+                    else if (_latitudes[i, j] > maxlat - 0.2f)
+                    {
+                        _grid[i, j].GetComponent<Pentagon>().terrain = Terrain.DesertHills;
+                    }
+                    else
+                    {
+                        _grid[i, j].GetComponent<Pentagon>().terrain = Terrain.Hills;
+                    }
                 }
                 else
                 {
@@ -366,14 +381,23 @@ public class Map : MonoBehaviour
             case Terrain.Plain:
                 cell.GetComponent<SpriteRenderer>().color = new Color(0.49f, 0.99f, 0f);
                 break;
-            case Terrain.Mountains:
-                cell.GetComponent<SpriteRenderer>().color = new Color(0.55f, 0.55f, 0.48f);
+            case Terrain.Forest:
+                cell.GetComponent<SpriteRenderer>().color = new Color(0.13f, 0.55f, 0.13f);
                 break;
             case Terrain.Desert:
                 cell.GetComponent<SpriteRenderer>().color = new Color(0.99f, 0.87f, 0.46f);
                 break;
-            case Terrain.Forest:
-                cell.GetComponent<SpriteRenderer>().color = new Color(0.13f, 0.55f, 0.13f);
+            case Terrain.Hills:
+                cell.GetComponent<SpriteRenderer>().color = new Color(0.4f, 0.8f, 0f);
+                break;
+            case Terrain.ForestHills:
+                cell.GetComponent<SpriteRenderer>().color = new Color(0.09f, 0.39f, 0.09f);
+                break;
+            case Terrain.DesertHills:
+                cell.GetComponent<SpriteRenderer>().color = new Color(0.99f, 0.82f, 0.28f);
+                break;
+            case Terrain.Mountains:
+                cell.GetComponent<SpriteRenderer>().color = new Color(0.55f, 0.55f, 0.48f);
                 break;
         }
     }
