@@ -1,15 +1,18 @@
 ﻿using UnityEngine;
 
-public class Pentagon : MonoBehaviour
+public class Cell : MonoBehaviour
 {
     public Vector2Int offsetCoordinates;
     public Vector2Int axialCoordinates;
     public Vector3Int cubicCoordinates;
-    public PentaType pentaType;
+    public CellType cellType;
+    public float alitude;
+    public float latitude;
     public Terrain terrain;
-    public Pentagon[] neighbors;
+    public Cell[] neighbors;
+    public bool withRiver;
 
-    public void Init(int j, int i, PentaType type)
+    public void Init(int j, int i, CellType type)
     {
         offsetCoordinates = new Vector2Int(j, i);
         int x = j - (i - i % 2) / 2;
@@ -17,7 +20,7 @@ public class Pentagon : MonoBehaviour
         int y = -x - z;
         axialCoordinates = new Vector2Int(x, z);
         cubicCoordinates = new Vector3Int(x, y, z);
-        pentaType = type;
-        neighbors = new Pentagon[6];
+        cellType = type;
+        neighbors = new Cell[6];
     }
 }

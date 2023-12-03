@@ -245,8 +245,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   size: {x: 93, y: 61}
-  smoothingDegree: 2
-  pentagonPrefab: {fileID: 7394691248911625112, guid: 96a6d970191610e46a7e31f168951f72, type: 3}
+  riverMaxCount: 10
+  riverBetweenMinDistance: 7
+  riverGenAttempts: 10
+  smoothingDegree: 0
+  cellPrefab: {fileID: 7394691248911625112, guid: 96a6d970191610e46a7e31f168951f72, type: 3}
+  riverPrefab: {fileID: 9097049239413821737, guid: 2bd34f4498933f343b87b2513c6abeb5, type: 3}
 --- !u!4 &1293693305
 Transform:
   m_ObjectHideFlags: 0

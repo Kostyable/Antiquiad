@@ -1,4 +1,4 @@
-﻿public enum PentaType
+﻿public enum CellType
 {
     Left,
     Right,
