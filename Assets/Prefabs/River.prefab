@@ -27,8 +27,8 @@ Transform:
   m_GameObject: {fileID: 9097049239413821737}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -38.64, y: 17.42, z: -1}
-  m_LocalScale: {x: 1, y: 0.1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -1}
+  m_LocalScale: {x: 1, y: 0.2, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -97,7 +97,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4047c6900f024bb288c8e988b264314c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  id: 0
   coordinates: {x: 0, y: 0}
   cell1: {fileID: 0}
   cell2: {fileID: 0}
-  alitude: 0
+  altitude: 0
+  neighbors: []

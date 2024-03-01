@@ -4,8 +4,8 @@
     Plain,
     Forest,
     Desert,
+    Floodplain,
     Hills,
-    ForestHills,
     DesertHills,
     Mountains
 }

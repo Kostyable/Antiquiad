@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 937674d4b8344b9182b3b42ec94528e8
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - currentCell: {instanceID: 0}
+  - rememberedCell: {instanceID: 0}
+  - cityPrefab: {fileID: 674910826325683268, guid: dbb10dd4d35a89e40b4d9c37fd0c5a15, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

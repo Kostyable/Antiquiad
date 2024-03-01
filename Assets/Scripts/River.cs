@@ -6,7 +6,6 @@ public class River : MonoBehaviour
     public Vector2Int coordinates;
     public Cell cell1;
     public Cell cell2;
-    public float alitude;
     public River[] neighbors;
 
     public void Init(int riverID, Border border)
@@ -15,7 +14,18 @@ public class River : MonoBehaviour
         coordinates = border.Coordinates;
         cell1 = border.Cell1;
         cell2 = border.Cell2;
-        alitude = border.Alitude;
         neighbors = new River[4];
+    }
+    
+    public void SetDefaultColor()
+    {
+        gameObject.GetComponent<SpriteRenderer>().color = new Color(0.1f, 0.45f, 0.82f);
+    }
+    
+    public void SetFogOfWarColor()
+    {
+        Color currentColor = new Color(0.1f, 0.45f, 0.82f);
+        Color grayColor = new Color(0.25f, 0.25f, 0.25f);
+        gameObject.GetComponent<SpriteRenderer>().color = Color.Lerp(currentColor, grayColor, 0.5f);
     }
 }
