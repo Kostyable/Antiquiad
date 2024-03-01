@@ -114,12 +114,14 @@ public class City : MonoBehaviour
             Owner.CreateFogOfWar();
             Owner.DeleteBorders();
             Owner.CreateBorders();
+            Owner.SetResourcesAdds();
             Owner = civ;
             Owner.OwnedCells.UnionWith(cells);
             Owner.Cities.Add(this);
             Owner.CreateFogOfWar();
             Owner.DeleteBorders();
             Owner.CreateBorders();
+            SetResourcesCount();
             coreCell.SetTerrainColor();
         }
     }
@@ -326,6 +328,7 @@ public class City : MonoBehaviour
             {
                 resourcesModifiers[resource.Value] *= GameLogic.OrdinaryResourcesModifier;
             }
+            SetResourcesCount();
         }
         else
         {

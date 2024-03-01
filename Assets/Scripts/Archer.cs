@@ -7,7 +7,7 @@
         healthPoints = 15;
         attack = 10;
         defence = 4;
-        range = 5;
+        range = 2;
         base.Init(unitType, cell, civ);
     }
 }
