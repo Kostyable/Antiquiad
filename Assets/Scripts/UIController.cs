@@ -56,6 +56,7 @@ public class UIController : MonoBehaviour
     [Space(10)]
     [Header("Units")]
     [Space(10)]
+    [SerializeField] private string[] unitsNames;
     [SerializeField] private Sprite[] unitsSprites;
     [Space(10)]
     [Header("Cities")]
@@ -103,73 +104,73 @@ public class UIController : MonoBehaviour
         {
             if (go.GetComponent<Unit>().type == UnitType.Settler)
             {
-                _selectedName.text = "Settler";
+                _selectedName.text = unitsNames[0];
                 _selectedImage.sprite = unitsSprites[0];
                 _panel.AddItems(23, 24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.Scout)
             {
-                _selectedName.text = "Scout";
+                _selectedName.text = unitsNames[1];
                 _selectedImage.sprite = unitsSprites[1];
                 _panel.AddItems(24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.Warrior)
             {
-                _selectedName.text = "Warrior";
+                _selectedName.text = unitsNames[2];
                 _selectedImage.sprite = unitsSprites[2];
                 _panel.AddItems(24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.Slinger)
             {
-                _selectedName.text = "Slinger";
+                _selectedName.text = unitsNames[3];
                 _selectedImage.sprite = unitsSprites[3];
                 _panel.AddItems(24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.Archer)
             {
-                _selectedName.text = "Archer";
+                _selectedName.text = unitsNames[4];
                 _selectedImage.sprite = unitsSprites[4];
                 _panel.AddItems(24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.Chariot)
             {
-                _selectedName.text = "Chariot";
+                _selectedName.text = unitsNames[5];
                 _selectedImage.sprite = unitsSprites[5];
                 _panel.AddItems(24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.Spearman)
             {
-                _selectedName.text = "Spearman";
+                _selectedName.text = unitsNames[6];
                 _selectedImage.sprite = unitsSprites[6];
                 _panel.AddItems(24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.Hoplite)
             {
-                _selectedName.text = "Hoplite";
+                _selectedName.text = unitsNames[7];
                 _selectedImage.sprite = unitsSprites[7];
                 _panel.AddItems(24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.Horseman)
             {
-                _selectedName.text = "Horseman";
+                _selectedName.text = unitsNames[8];
                 _selectedImage.sprite = unitsSprites[8];
                 _panel.AddItems(24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.Swordsman)
             {
-                _selectedName.text = "Swordsman";
+                _selectedName.text = unitsNames[9];
                 _selectedImage.sprite = unitsSprites[9];
                 _panel.AddItems(24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.Catapult)
             {
-                _selectedName.text = "Catapult";
+                _selectedName.text = unitsNames[10];
                 _selectedImage.sprite = unitsSprites[10];
                 _panel.AddItems(24);
             }
             else if (go.GetComponent<Unit>().type == UnitType.SiegeTower)
             {
-                _selectedName.text = "Siege Tower";
+                _selectedName.text = unitsNames[11];
                 _selectedImage.sprite = unitsSprites[11];
                 _panel.AddItems(24);
             }

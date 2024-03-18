@@ -441,9 +441,4 @@ public class UIInteraction : MonoBehaviour
     {
         SceneManager.LoadScene("Menu");
     }
-
-    public void CloseWindow()
-    {
-        transform.parent.gameObject.SetActive(false);
-    }
 }

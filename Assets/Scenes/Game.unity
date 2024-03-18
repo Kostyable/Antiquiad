@@ -1629,6 +1629,19 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 31ddfb8da6f1d5e418bd0218b56e32a4, type: 3}
   - {fileID: 21300000, guid: 0f0fd7e4866e0b049a08680e76f9c82e, type: 3}
   - {fileID: 21300000, guid: 2fdf81fe02f26f046a13fef3f18d71e7, type: 3}
+  unitsNames:
+  - Settler
+  - Scout
+  - Warrior
+  - Slinger
+  - Archer
+  - Chariot
+  - Spearman
+  - Hoplite
+  - Horseman
+  - Swordsman
+  - Catapult
+  - Siege Tower
   unitsSprites:
   - {fileID: 21300000, guid: 5da772b1eb7cb9d46a4fa18e4fe19d6d, type: 3}
   - {fileID: 21300000, guid: 6d0cc884e61eb7a4ba29b51fc75b9870, type: 3}
