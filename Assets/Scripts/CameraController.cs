@@ -54,6 +54,12 @@ public class CameraController : MonoBehaviour
         LimitCameraToBounds();
     }
     
+    private bool IsCursorInsideScreenBounds(Vector3 cursorPosition)
+    {
+        return cursorPosition.x >= 0 && cursorPosition.x <= Screen.width &&
+               cursorPosition.y >= 0 && cursorPosition.y <= Screen.height;
+    }
+    
     private Vector2 GetWorldSize(RectTransform rectTransform)
     {
         Vector3[] corners = new Vector3[4];
@@ -78,7 +84,7 @@ public class CameraController : MonoBehaviour
 
     private void HandleZoom()
     {
-        if (!map.IsMouseOverUI())
+        if (!map.IsMouseOverUI() && IsCursorInsideScreenBounds(Input.mousePosition))
         {
             if (Application.platform == RuntimePlatform.WindowsPlayer
                 || Application.platform == RuntimePlatform.WindowsEditor)
@@ -132,7 +138,7 @@ public class CameraController : MonoBehaviour
 
     private void HandleDrag()
     {
-        if (!map.IsMouseOverUI())
+        if (!map.IsMouseOverUI() && IsCursorInsideScreenBounds(Input.mousePosition))
         {
             if (Application.platform == RuntimePlatform.WindowsPlayer
                 || Application.platform == RuntimePlatform.WindowsEditor)

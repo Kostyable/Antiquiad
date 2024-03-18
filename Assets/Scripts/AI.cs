@@ -15,9 +15,8 @@ public class AI
     {
         if (GameLogic.Turn == 1)
         {
-            Map.BuildCity((Settler)Civ.Units[0]);
+            Map.FoundCity((Settler)Civ.Units[0]);
         }
-
         Cell cell = GameObject.Find("Map").GetComponent<Map>().SelectCellForNewUnit(Civ.Cities[0]);
         if (cell != null)
         {
@@ -26,6 +25,5 @@ public class AI
                 Map.CreateUnit(UnitType.Scout, cell, Civ);
             }
         }
-        
     }
 }

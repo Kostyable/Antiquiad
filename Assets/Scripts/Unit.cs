@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class Unit : MonoBehaviour
 {
@@ -159,6 +160,11 @@ public class Unit : MonoBehaviour
             if (GameObject.Find("Main Camera") != null)
             {
                 GameObject.Find("Main Camera").GetComponent<UIController>().UnselectObject();
+            }
+            if (GameLogic.Civs[0].Units.Count == 0 && GameLogic.Civs[0].Cities.Count == 0)
+            {
+                GameLogic.Result = false;
+                SceneManager.LoadScene("Game Over");
             }
         }
     }

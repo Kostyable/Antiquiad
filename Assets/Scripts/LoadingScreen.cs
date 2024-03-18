@@ -6,14 +6,15 @@ using TMPro;
 
 public class LoadingScreen : MonoBehaviour
 {
-    public Slider loadingSlider;
-    public TextMeshProUGUI loadingText;
-    public TextMeshProUGUI loadingHeader;
+    [SerializeField] private Slider loadingSlider;
+    [SerializeField] private TextMeshProUGUI loadingText;
+    [SerializeField] private TextMeshProUGUI loadingHeader;
     public float dotInterval = 0.1f;
-    private string _baseLoadingHeader = "Loading";
+    private string _baseLoadingHeader;
 
     void Start()
     {
+        _baseLoadingHeader = "LOADING";
         loadingHeader.text = _baseLoadingHeader;
         StartCoroutine(PlayLoadingDots());
         StartCoroutine(LoadAsyncScene());

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
@@ -55,6 +54,8 @@ public class UIInteraction : MonoBehaviour
 
     public void OnNewGameClick()
     {
+        transform.localScale /= 1.1f;
+        GetComponent<TextMeshProUGUI>().font = _originalFont;
         GameObject.Find("Main Camera").GetComponent<MenuManager>().ShowNewGame();
     }
 
@@ -65,18 +66,24 @@ public class UIInteraction : MonoBehaviour
     
     public void OnEgyptClick()
     {
+        PlayerPrefs.SetInt("IsTutorial", 0);
+        PlayerPrefs.Save();
         GameLogic.SelectedCiv = CivilizationName.Egypt;
         SceneManager.LoadScene("Loading Screen");
     }
     
     public void OnGreeceClick()
     {
+        PlayerPrefs.SetInt("IsTutorial", 0);
+        PlayerPrefs.Save();
         GameLogic.SelectedCiv = CivilizationName.Greece;
         SceneManager.LoadScene("Loading Screen");
     }
     
     public void OnMesopotamiaClick()
     {
+        PlayerPrefs.SetInt("IsTutorial", 0);
+        PlayerPrefs.Save();
         GameLogic.SelectedCiv = CivilizationName.Mesopotamia;
         SceneManager.LoadScene("Loading Screen");
     }
@@ -87,7 +94,7 @@ public class UIInteraction : MonoBehaviour
         GameObject.Find("Main Camera").GetComponent<UIController>().SetCurrentValues();
     }
     
-    public void OnBuildCityClick()
+    public void OnFoundCityClick()
     {
         HashSet<Cell> cells = Map.SelectedUnit.currentCell.GetCellsInRadius(1, false);
         foreach (Civilization civ in GameLogic.Civs)
@@ -107,7 +114,7 @@ public class UIInteraction : MonoBehaviour
         {
             return;
         }
-        GameObject.Find("Map").GetComponent<Map>().BuildCity((Settler)Map.SelectedUnit);
+        GameObject.Find("Map").GetComponent<Map>().FoundCity((Settler)Map.SelectedUnit);
     }
     
     public void OnDisbandUnitClick()
@@ -423,8 +430,20 @@ public class UIInteraction : MonoBehaviour
         }
     }
 
+    public void OnBackClick()
+    {
+        transform.localScale /= 1.1f;
+        GetComponent<TextMeshProUGUI>().font = _originalFont;
+        GameObject.Find("Main Camera").GetComponent<MenuManager>().ShowMainMenu();
+    }
+    
     public void OnBackToMenuClick()
     {
         SceneManager.LoadScene("Menu");
+    }
+
+    public void CloseWindow()
+    {
+        transform.parent.gameObject.SetActive(false);
     }
 }

@@ -4,10 +4,17 @@ using TMPro;
 public class Result : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI result;
+    
     void Start()
     {
-        result.text = PlayerPrefs.GetString("Result");
-        PlayerPrefs.DeleteKey("Result");
-        PlayerPrefs.Save();
+        if (GameLogic.Result == true)
+        {
+            result.text = "YOU WIN!";
+        }
+        else if (GameLogic.Result == false)
+        {
+            result.text = "YOU LOSE!";
+        }
+        GameLogic.Result = null;
     }
 }

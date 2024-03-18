@@ -2,12 +2,18 @@
 
 public class MenuManager : MonoBehaviour
 {
-    public GameObject mainMenuCanvas;
-    public GameObject newGameCanvas;
+    [SerializeField] private GameObject mainMenuCanvas;
+    [SerializeField] private GameObject newGameCanvas;
 
     public void ShowNewGame()
     {
         mainMenuCanvas.SetActive(false);
         newGameCanvas.SetActive(true);
+    }
+    
+    public void ShowMainMenu()
+    {
+        newGameCanvas.SetActive(false);
+        mainMenuCanvas.SetActive(true);
     }
 }

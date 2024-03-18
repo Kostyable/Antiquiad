@@ -3,6 +3,7 @@
 public static class GameLogic
 {
     public static CivilizationName SelectedCiv;
+    public static bool? Result;
     public static Civilization[] Civs;
     public static AI[] AIs;
     public static int Turn;

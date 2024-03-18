@@ -86,16 +86,14 @@ public class City : MonoBehaviour
         {
             if (this == GameLogic.Civs[0].Cities[0])
             {
-                PlayerPrefs.SetString("Result", "YOU LOSE!");
-                PlayerPrefs.Save();
+                GameLogic.Result = false;
                 SceneManager.LoadScene("Game Over");
             }
             for (int i = 1; i < GameLogic.Civs.Length; i++)
             {
                 if (this == GameLogic.Civs[i].Cities[0])
                 {
-                    PlayerPrefs.SetString("Result", "YOU WIN!");
-                    PlayerPrefs.Save();
+                    GameLogic.Result = true;
                     SceneManager.LoadScene("Game Over");
                 }
             }
@@ -212,7 +210,7 @@ public class City : MonoBehaviour
                     }
                     break;
                 case CivilizationName.Mesopotamia:
-                    if (coreCell.unit.type == UnitType.Hoplite)
+                    if (coreCell.unit.type == UnitType.SiegeTower)
                     {
                         transform.GetChild(0).GetComponent<SpriteRenderer>().sprite = MesopotamiaUnitsSprites[8];
                     }

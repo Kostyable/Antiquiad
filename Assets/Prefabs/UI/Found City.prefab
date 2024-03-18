@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3965202305882041793}
   - component: {fileID: 63442889197974945}
   m_Layer: 5
-  m_Name: Build City Image
+  m_Name: Found City Image
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -87,7 +87,7 @@ GameObject:
   - component: {fileID: 1153041708438639206}
   - component: {fileID: 4128902448811064099}
   m_Layer: 5
-  m_Name: Build City
+  m_Name: Found City
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -165,7 +165,7 @@ MonoBehaviour:
         m_Calls:
         - m_Target: {fileID: 4128902448811064099}
           m_TargetAssemblyTypeName: UIInteraction, Assembly-CSharp
-          m_MethodName: OnBuildCityClick
+          m_MethodName: OnFoundCityClick
           m_Mode: 1
           m_Arguments:
             m_ObjectArgument: {fileID: 0}
@@ -200,7 +200,7 @@ GameObject:
   - component: {fileID: 4336093736115249002}
   - component: {fileID: 6699861435234121828}
   m_Layer: 5
-  m_Name: Build City Text
+  m_Name: Found City Name
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -253,7 +253,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Build City
+  m_text: Found City
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 085bc180a951ad943af9ba608e8dca36, type: 2}
   m_sharedMaterial: {fileID: -2648713398736901904, guid: 085bc180a951ad943af9ba608e8dca36, type: 2}

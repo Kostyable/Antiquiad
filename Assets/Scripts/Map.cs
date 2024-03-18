@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
 
 public class Map : MonoBehaviour
@@ -686,12 +685,6 @@ public class Map : MonoBehaviour
     
     private void Update()
     {
-        if (GameLogic.Civs[0].Units.Count == 0 && GameLogic.Civs[0].Cities.Count == 0)
-        {
-            PlayerPrefs.SetString("Result", "YOU LOSE!");
-            PlayerPrefs.Save();
-            SceneManager.LoadScene("Game Over");
-        }
         foreach (Civilization civ in GameLogic.Civs)
         {
             foreach (City city in civ.Cities)
@@ -970,6 +963,15 @@ public class Map : MonoBehaviour
     {
         PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
         eventDataCurrentPosition.position = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
+        return results.Count > 0;
+    }
+    
+    public bool IsTouchOverUI(Vector2 touchPosition)
+    {
+        PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
+        eventDataCurrentPosition.position = touchPosition;
         List<RaycastResult> results = new List<RaycastResult>();
         EventSystem.current.RaycastAll(eventDataCurrentPosition, results);
         return results.Count > 0;
@@ -2067,7 +2069,7 @@ public class Map : MonoBehaviour
         }
     }
     
-    public void BuildCity(Settler settler)
+    public void FoundCity(Settler settler)
     {
         Vector2 position = settler.currentCell.GetComponent<Transform>().position;
         City city = Instantiate(cityPrefab, new Vector3(position.x, position.y, -3), 
