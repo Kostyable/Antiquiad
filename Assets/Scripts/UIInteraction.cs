@@ -495,6 +495,6 @@ public class UIInteraction : MonoBehaviour
     
     public void OnSaveClick()
     {
-        GameObject.Find("Map").GetComponent<Map>().SaveGame();
+        GameObject.Find("Map").GetComponent<SaveLoader>().SaveGame();
     }
 }

@@ -8,9 +8,9 @@ public class Map : MonoBehaviour
 {
     [SerializeField] private Generator generator;
     [SerializeField] private UIController uiController;
-    [SerializeField] private GameObject cellPrefab;
     [SerializeField] private GameObject phantomCellPrefab;
     [SerializeField] private GameObject cityPrefab;
+    public GameObject cellPrefab;
     public GameObject riverPrefab;
     public Vector2Int size;
     public Cell[,] Cells;
@@ -288,7 +288,9 @@ public class Map : MonoBehaviour
         CreatePhantomCells();
         if (GameLogic.LoadGame)
         {
-            LoadGame();
+            gameObject.GetComponent<SaveLoader>().LoadGame();
+            GameLogic.Civs[0].CreateFogOfWar();
+            uiController.SetCurrentValues();
         }
         else
         {
@@ -908,227 +910,6 @@ public class Map : MonoBehaviour
         _focusedObject = GameLogic.Civs[0].Units[0].gameObject;
     }
     
-    public void LoadGame()
-    {
-        if (Camera.main != null)
-        {
-            Camera.main.transform.position = ES3.Load<Vector3>("cameraPosition");
-            Camera.main.transform.rotation = ES3.Load<Quaternion>("cameraRotation");
-            Camera.main.transform.localScale = ES3.Load<Vector3>("cameraScale");
-            Camera.main.orthographicSize = ES3.Load<float>("cameraSize");
-        }
-        GameLogicData gameLogicData = ES3.Load<GameLogicData>("gameLogic");
-        GameLogic.Result = null;
-        GameLogic.SelectedCiv = gameLogicData.selectedCiv;
-        GameLogic.Civs = new Civilization[gameLogicData.civs.Length];
-        GameLogic.AIs = new AI[gameLogicData.civs.Length - 1];
-        for (int i = 0; i < gameLogicData.civs.Length; i++)
-        {
-            GameLogic.Civs[i] = new Civilization(gameLogicData.civs[i]);
-            if (i != 0)
-            {
-                GameLogic.AIs[i - 1] = new AI(this, GameLogic.Civs[i]);
-            }
-        }
-        GameLogic.Turn = gameLogicData.turn;
-        GameLogic.WaterCost = gameLogicData.waterCost;
-        GameLogic.PlainCost = gameLogicData.plainCost;
-        GameLogic.DesertCost = gameLogicData.desertCost;
-        GameLogic.FloodplainCost = gameLogicData.floodplainCost;
-        GameLogic.ForestCost = gameLogicData.forestCost;
-        GameLogic.HillsCost = gameLogicData.hillsCost;
-        GameLogic.DesertHillsCost = gameLogicData.desertHillsCost;
-        GameLogic.MountainsCost = gameLogicData.mountainsCost;
-        GameLogic.RiverCost = gameLogicData.riverCost;
-        GameLogic.UnitsCosts = gameLogicData.UnitsCosts;
-        GameLogic.BuildingsCosts = gameLogicData.BuildingsCosts;
-        GameLogic.CityExpansionRadius = gameLogicData.cityExpansionRadius;
-        GameLogic.ExpansionFoodCount = gameLogicData.expansionFoodCount;
-        GameLogic.OrdinaryResourcesModifier = gameLogicData.ordinaryResourcesModifier;
-        GameLogic.StrategicResourcesModifier = gameLogicData.strategicResourcesModifier;
-        GameLogic.CapitalModifier = gameLogicData.capitalModifier;
-        GameLogic.RiverModifier = gameLogicData.riverModifier;
-        CellData[,] cellsData = ES3.Load<CellData[,]>("cells");
-        for (int i = 0; i < size.y; i++)
-        {
-            for (int j = 0; j < size.x; j++)
-            {
-                GameObject cell = Instantiate(cellPrefab, GetCellCoordinates(j, i),
-                    GetCellAngle(j, i), transform);
-                cell.GetComponent<Cell>().Init(cellsData[i, j]);
-                cell.GetComponent<Cell>().SetTerraIncognitaColor();
-                Cells[i, j] = cell.GetComponent<Cell>();
-                if (cellsData[i, j].resourceType != ResourceType.None)
-                {
-                    switch (cellsData[i, j].resourceType)
-                    {
-                        case ResourceType.Wheat:
-                            Cells[i, j].resource =
-                                Instantiate(resourcesPrefabs[0],
-                                    new Vector3(Cells[i, j].transform.position.x,
-                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
-                            break;
-                        case ResourceType.Cattle:
-                            Cells[i, j].resource =
-                                Instantiate(resourcesPrefabs[1],
-                                    new Vector3(Cells[i, j].transform.position.x,
-                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
-                            break;
-                        case ResourceType.Fish:
-                            Cells[i, j].resource =
-                                Instantiate(resourcesPrefabs[2],
-                                    new Vector3(Cells[i, j].transform.position.x,
-                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
-                            break;
-                        case ResourceType.Wood:
-                            Cells[i, j].resource =
-                                Instantiate(resourcesPrefabs[3],
-                                    new Vector3(Cells[i, j].transform.position.x,
-                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
-                            break;
-                        case ResourceType.Stone:
-                            Cells[i, j].resource =
-                                Instantiate(resourcesPrefabs[4],
-                                    new Vector3(Cells[i, j].transform.position.x,
-                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
-                            break;
-                        case ResourceType.Gold:
-                            Cells[i, j].resource =
-                                Instantiate(resourcesPrefabs[5],
-                                    new Vector3(Cells[i, j].transform.position.x,
-                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
-                            break;
-                        case ResourceType.Horses:
-                            Cells[i, j].resource =
-                                Instantiate(resourcesPrefabs[6],
-                                    new Vector3(Cells[i, j].transform.position.x,
-                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
-                            break;
-                        case ResourceType.Copper:
-                            Cells[i, j].resource =
-                                Instantiate(resourcesPrefabs[7],
-                                    new Vector3(Cells[i, j].transform.position.x,
-                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
-                            break;
-                        case ResourceType.Iron:
-                            Cells[i, j].resource =
-                                Instantiate(resourcesPrefabs[8],
-                                    new Vector3(Cells[i, j].transform.position.x,
-                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
-                            break;
-                    }
-                    Cells[i, j].resource.SetActive(false);
-                }
-                if (cellsData[i, j].rivers.Count > 0)
-                {
-                    foreach (RiverData riverData in cellsData[i, j].rivers)
-                    {
-                        River river = Rivers.FirstOrDefault(river => river.coordinates == riverData.coordinates);
-                        if (river == null)
-                        {
-                            Vector2Int coord = riverData.coordinates;
-                            river = Instantiate(riverPrefab, GetRiverCoordinates(coord.x, coord.y),
-                                GetRiverAngle(coord.x, coord.y), transform).GetComponent<River>();
-                            river.transform.localScale = new Vector3(GetRiverLength(coord.x, coord.y),
-                                0.20f, -1f);
-                            river.Init(riverData);
-                            river.cell1 = Cells[i, j];
-                            Cells[i, j].rivers.Add(river);
-                            Rivers.Add(river);
-                        }
-                        else
-                        {
-                            river.cell2 = Cells[i, j];
-                            Cells[i, j].rivers.Add(river);
-                        }
-                    }
-                }
-            }
-        }
-        for (int i = 0; i < size.y; i++)
-        {
-            for (int j = 0; j < size.x; j++)
-            {
-                SetCellNeighbors(Cells[i, j]);
-            }
-        }
-        foreach (River river in Rivers)
-        {
-            SetRiverNeighbors(river);
-            river.gameObject.SetActive(false);
-        }
-        for (int i = 0; i < size.y; i++)
-        {
-            for (int j = 0; j < size.x; j++)
-            {
-                if (cellsData[i, j].unit != null)
-                {
-                    Civilization civ =
-                        GameLogic.Civs.FirstOrDefault(civ => civ.Name == cellsData[i, j].unit.owner);
-                    CreateUnit(cellsData[i, j].unit, Cells[i, j], civ);
-                }
-                if (cellsData[i, j].city != null
-                    && cellsData[i, j].city.coreCellCoordinates == cellsData[i, j].offsetCoordinates)
-                {
-                    Civilization civ =
-                        GameLogic.Civs.FirstOrDefault(civ => civ.Name == cellsData[i, j].city.owner);
-                    CreateCity(cellsData[i,j].city, Cells[i, j], civ);
-                }
-                foreach (Civilization civ in GameLogic.Civs)
-                {
-                    if (cellsData[i, j].IsExplored[civ.Name])
-                    {
-                        if (civ.Name == GameLogic.SelectedCiv)
-                        {
-                            if (Cells[i, j].rivers.Count > 0)
-                            {
-                                foreach (River river in Cells[i, j].rivers)
-                                {
-                                    if (cellsData[river.cell1.offsetCoordinates.y,
-                                            river.cell1.offsetCoordinates.x].IsExplored[GameLogic.SelectedCiv]
-                                        && cellsData[river.cell2.offsetCoordinates.y,
-                                            river.cell2.offsetCoordinates.x].IsExplored[GameLogic.SelectedCiv])
-                                    {
-                                        river.gameObject.SetActive(true);
-                                    }
-                                }
-                            }
-                            if (Cells[i, j].resource != null)
-                            {
-                                Cells[i, j].resource.SetActive(true);
-                            }
-                        }
-                        civ.ExploredCells.Add(Cells[i, j]);
-                    }
-                }
-            }
-        }
-        GameLogic.Civs[0].CreateFogOfWar();
-        uiController.SetCurrentValues();
-    }
-    
-    public void SaveGame()
-    {
-        if (Camera.main != null)
-        {
-            ES3.Save("cameraPosition", Camera.main.transform.position);
-            ES3.Save("cameraRotation", Camera.main.transform.rotation);
-            ES3.Save("cameraScale", Camera.main.transform.localScale);
-            ES3.Save("cameraSize", Camera.main.orthographicSize);
-        }
-        ES3.Save("gameLogic", GameLogic.CollectGameLogicData());
-        CellData[,] cellsData = new CellData[size.y, size.x];
-        for (int i = 0; i < size.y; i++)
-        {
-            for (int j = 0; j < size.x; j++)
-            {
-                cellsData[i, j] = Cells[i, j].CollectCellData();
-            }
-        }
-        ES3.Save("cells", cellsData);
-        ES3.Save("size", new Vector2Int(size.x, size.y));
-    }
-    
     public bool IsMouseOverUI()
     {
         PointerEventData eventDataCurrentPosition = new PointerEventData(EventSystem.current);
@@ -1200,7 +981,7 @@ public class Map : MonoBehaviour
         }
     }
     
-    private Vector2 GetCellCoordinates(int x, int y)
+    public Vector2 GetCellCoordinates(int x, int y)
     {
         if (y % 2 == 0)
         {
@@ -1230,7 +1011,7 @@ public class Map : MonoBehaviour
         }
     }
     
-    private Quaternion GetCellAngle(int x, int y)
+    public Quaternion GetCellAngle(int x, int y)
     {
         if (y % 2 == 0)
         {
@@ -1280,7 +1061,7 @@ public class Map : MonoBehaviour
         }
     }
     
-    private void SetCellNeighbors(Cell cell)
+    public void SetCellNeighbors(Cell cell)
     {
         if (cell.offsetCoordinates.y % 2 == 0)
         {
@@ -1521,7 +1302,7 @@ public class Map : MonoBehaviour
         }
     }
     
-    private void SetRiverNeighbors(River river)
+    public void SetRiverNeighbors(River river)
     {
         if (river.coordinates.y % 2 == 0)
         {
