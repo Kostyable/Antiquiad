@@ -3,18 +3,20 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using Random = UnityEngine.Random;
 
 public class Map : MonoBehaviour
 {
+    [SerializeField] private Generator generator;
     [SerializeField] private UIController uiController;
-    [SerializeField] public Vector2Int size;
     [SerializeField] private GameObject cellPrefab;
     [SerializeField] private GameObject phantomCellPrefab;
     [SerializeField] private GameObject cityPrefab;
-    private GameObject[,] _cells;
-    private Vector2[] _cellOffsets;
-    private Vector2[] _riverOffsets;
+    public GameObject riverPrefab;
+    public Vector2Int size;
+    public Cell[,] Cells;
+    [NonSerialized] public List<River> Rivers;
+    [NonSerialized] public Vector2[] CellsOffsets;
+    [NonSerialized] public Vector2[] RiversOffsets;
     private Vector2Int _origin;
     private Vector2 _center;
     public static float MinX;
@@ -23,316 +25,230 @@ public class Map : MonoBehaviour
     public static float MaxY;
     public static string CurrentMessage;
     public static bool MenuEnabled;
-    private int _altitudeSeed;
-    private int _humiditySeed;
-    private Border[,] _borders;
-    private List<River> _rivers;
-    private HashSet<Border> _riverSources;
-    private HashSet<Border> _riverUsed;
-    private HashSet<Border> _riverTempUsed;
+    private GameObject _clickedObject;
+    private GameObject _focusedObject;
+    [NonSerialized] public static Unit SelectedUnit;
+    [NonSerialized] public static City SelectedCity;
+    private Cell _goalCell;
+    private float _longPressDuration;
+    private float _pressStartTime;
+    private Vector2 _touchPosition;
+    private float _touchDelta;
     [Space(10)]
-    [Header("Terrain")]
+    [Header("Terrain Costs")]
     [Space(10)]
-    [SerializeField] private float altitudeA;
-    [SerializeField] private float altitudeB;
-    [SerializeField] private float altitudeC;
-    [SerializeField] private int altitudeScale;
-    [SerializeField] private int humidityScale;
-    [Header("Water")]
-    [Range(0, 100)] public int waterMinAltitude;
-    [Range(0, 100)] public int waterMaxAltitude;
-    [Range(0, 100)] public int waterMinHumidity;
-    [Range(0, 100)] public int waterMaxHumidity;
-    [SerializeField] private int waterCost;
-    [Header("Desert")]
-    [Range(0, 100)] public int desertMinAltitude;
-    [Range(0, 100)] public int desertMaxAltitude;
-    [Range(0, 100)] public int desertMinHumidity;
-    [Range(0, 100)] public int desertMaxHumidity;
-    [SerializeField] private int desertCost;
-    [Header("Floodplain")]
-    [SerializeField] private int floodplainCost;
-    [Header("Plain")]
-    [Range(0, 100)] public int plainMinAltitude;
-    [Range(0, 100)] public int plainMaxAltitude;
-    [Range(0, 100)] public int plainMinHumidity;
-    [Range(0, 100)] public int plainMaxHumidity;
-    [SerializeField] private int plainCost;
-    [Header("Forest")]
-    [Range(0, 100)] public int forestMinAltitude;
-    [Range(0, 100)] public int forestMaxAltitude;
-    [Range(0, 100)] public int forestMinHumidity;
-    [Range(0, 100)] public int forestMaxHumidity;
-    [SerializeField] private int forestCost;
-    [Header("Desert Hills")]
-    [Range(0, 100)] public int desertHillsMinAltitude;
-    [Range(0, 100)] public int desertHillsMaxAltitude;
-    [Range(0, 100)] public int desertHillsMinHumidity;
-    [Range(0, 100)] public int desertHillsMaxHumidity;
-    [SerializeField] private int desertHillsCost;
-    [Header("Hills")]
-    [Range(0, 100)] public int hillsMinAltitude;
-    [Range(0, 100)] public int hillsMaxAltitude;
-    [Range(0, 100)] public int hillsMinHumidity;
-    [Range(0, 100)] public int hillsMaxHumidity;
-    [SerializeField] private int hillsCost;
-    [Header("Mountains")]
-    [Range(0, 100)] public int mountainsMinAltitude;
-    [Range(0, 100)] public int mountainsMaxAltitude;
-    [Range(0, 100)] public int mountainsMinHumidity;
-    [Range(0, 100)] public int mountainsMaxHumidity;
-    [SerializeField] private int mountainsCost;
-    [Space(10)]
-    [Header("Rivers")]
-    [Space(10)]
-    [SerializeField] private int riverMaxCount;
-    [SerializeField] private int riverBetweenMinDistance;
-    [SerializeField] private int riverGenAttempts;
-    [SerializeField] private int riverCost;
-    [SerializeField] private GameObject riverPrefab;
-    [Range(0, 100)] public int riverSourcesMinAltitude;
-    [Range(0, 100)] public int riverSourcesMaxAltitude;
+    public int waterCost;
+    public int desertCost;
+    public int floodplainCost;
+    public int plainCost;
+    public int forestCost;
+    public int desertHillsCost;
+    public int hillsCost;
+    public int mountainsCost;
+    public int riverCost;
     [Space(10)]
     [Header("Resources")]
     [Space(10)]
-    [SerializeField] private GameObject[] resourcesPrefabs;
-    [Header("Water")]
-    [Range(0, 100)] public int waterFish;
-    [Header("Desert")]
-    [Range(0, 100)] public int desertStone;
-    [Range(0, 100)] public int desertGold;
-    [Header("Floodplain")]
-    [Range(0, 100)] public int floodplainWheat;
-    [Range(0, 100)] public int floodplainCattle;
-    [Range(0, 100)] public int floodplainHorses;
-    [Header("Plain")]
-    [Range(0, 100)] public int plainWheat;
-    [Range(0, 100)] public int plainCattle;
-    [Range(0, 100)] public int plainStone;
-    [Range(0, 100)] public int plainGold;
-    [Range(0, 100)] public int plainHorses;
-    [Header("Forest")]
-    [Range(0, 100)] public int forestWood;
-    [Header("Desert Hills")]
-    [Range(0, 100)] public int desertHillsStone;
-    [Range(0, 100)] public int desertHillsGold;
-    [Range(0, 100)] public int desertHillsCopper;
-    [Range(0, 100)] public int desertHillsIron;
-    [Header("Hills")]
-    [Range(0, 100)] public int hillsStone;
-    [Range(0, 100)] public int hillsGold;
-    [Range(0, 100)] public int hillsCattle;
-    [Range(0, 100)] public int hillsCopper;
-    [Range(0, 100)] public int hillsIron;
+    public GameObject[] resourcesPrefabs;
     [Space(10)]
     [Header("Units")]
     [Space(10)]
-    [SerializeField] private GameObject[] egyptUnitsPrefabs;
-    [SerializeField] private GameObject[] greeceUnitsPrefabs;
-    [SerializeField] private GameObject[] mesopotamiaUnitsPrefabs;
+    public GameObject[] egyptUnitsPrefabs;
+    public GameObject[] greeceUnitsPrefabs;
+    public GameObject[] mesopotamiaUnitsPrefabs;
     [Space(10)]
     [Header("Units Costs")]
     [Space(10)]
     [Header("Settler")]
-    [SerializeField] private int settlerFood;
-    [SerializeField] private int settlerWood;
-    [SerializeField] private int settlerStone;
-    [SerializeField] private int settlerGold;
-    [SerializeField] private int settlerHorses;
-    [SerializeField] private int settlerBronze;
-    [SerializeField] private int settlerIron;
+    public int settlerFood;
+    public int settlerWood;
+    public int settlerStone;
+    public int settlerGold;
+    public int settlerHorses;
+    public int settlerBronze;
+    public int settlerIron;
     [Header("Scout")]
-    [SerializeField] private int scoutFood;
-    [SerializeField] private int scoutWood;
-    [SerializeField] private int scoutStone;
-    [SerializeField] private int scoutGold;
-    [SerializeField] private int scoutHorses;
-    [SerializeField] private int scoutBronze;
-    [SerializeField] private int scoutIron;
+    public int scoutFood;
+    public int scoutWood;
+    public int scoutStone;
+    public int scoutGold;
+    public int scoutHorses;
+    public int scoutBronze;
+    public int scoutIron;
     [Header("Warrior")]
-    [SerializeField] private int warriorFood;
-    [SerializeField] private int warriorWood;
-    [SerializeField] private int warriorStone;
-    [SerializeField] private int warriorGold;
-    [SerializeField] private int warriorHorses;
-    [SerializeField] private int warriorBronze;
-    [SerializeField] private int warriorIron;
+    public int warriorFood;
+    public int warriorWood;
+    public int warriorStone;
+    public int warriorGold;
+    public int warriorHorses;
+    public int warriorBronze;
+    public int warriorIron;
     [Header("Slinger")]
-    [SerializeField] private int slingerFood;
-    [SerializeField] private int slingerWood;
-    [SerializeField] private int slingerStone;
-    [SerializeField] private int slingerGold;
-    [SerializeField] private int slingerHorses;
-    [SerializeField] private int slingerBronze;
-    [SerializeField] private int slingerIron;
+    public int slingerFood;
+    public int slingerWood;
+    public int slingerStone;
+    public int slingerGold;
+    public int slingerHorses;
+    public int slingerBronze;
+    public int slingerIron;
     [Header("Archer")]
-    [SerializeField] private int archerFood;
-    [SerializeField] private int archerWood;
-    [SerializeField] private int archerStone;
-    [SerializeField] private int archerGold;
-    [SerializeField] private int archerHorses;
-    [SerializeField] private int archerBronze;
-    [SerializeField] private int archerIron;
+    public int archerFood;
+    public int archerWood;
+    public int archerStone;
+    public int archerGold;
+    public int archerHorses;
+    public int archerBronze;
+    public int archerIron;
     [Header("Chariot")]
-    [SerializeField] private int chariotFood;
-    [SerializeField] private int chariotWood;
-    [SerializeField] private int chariotStone;
-    [SerializeField] private int chariotGold;
-    [SerializeField] private int chariotHorses;
-    [SerializeField] private int chariotBronze;
-    [SerializeField] private int chariotIron;
+    public int chariotFood;
+    public int chariotWood;
+    public int chariotStone;
+    public int chariotGold;
+    public int chariotHorses;
+    public int chariotBronze;
+    public int chariotIron;
     [Header("Spearman")]
-    [SerializeField] private int spearmanFood;
-    [SerializeField] private int spearmanWood;
-    [SerializeField] private int spearmanStone;
-    [SerializeField] private int spearmanGold;
-    [SerializeField] private int spearmanHorses;
-    [SerializeField] private int spearmanBronze;
-    [SerializeField] private int spearmanIron;
+    public int spearmanFood;
+    public int spearmanWood;
+    public int spearmanStone;
+    public int spearmanGold;
+    public int spearmanHorses;
+    public int spearmanBronze;
+    public int spearmanIron;
     [Header("Hoplite")]
-    [SerializeField] private int hopliteFood;
-    [SerializeField] private int hopliteWood;
-    [SerializeField] private int hopliteStone;
-    [SerializeField] private int hopliteGold;
-    [SerializeField] private int hopliteHorses;
-    [SerializeField] private int hopliteBronze;
-    [SerializeField] private int hopliteIron;
+    public int hopliteFood;
+    public int hopliteWood;
+    public int hopliteStone;
+    public int hopliteGold;
+    public int hopliteHorses;
+    public int hopliteBronze;
+    public int hopliteIron;
     [Header("Horseman")]
-    [SerializeField] private int horsemanFood;
-    [SerializeField] private int horsemanWood;
-    [SerializeField] private int horsemanStone;
-    [SerializeField] private int horsemanGold;
-    [SerializeField] private int horsemanHorses;
-    [SerializeField] private int horsemanBronze;
-    [SerializeField] private int horsemanIron;
+    public int horsemanFood;
+    public int horsemanWood;
+    public int horsemanStone;
+    public int horsemanGold;
+    public int horsemanHorses;
+    public int horsemanBronze;
+    public int horsemanIron;
     [Header("Swordsman")]
-    [SerializeField] private int swordsmanFood;
-    [SerializeField] private int swordsmanWood;
-    [SerializeField] private int swordsmanStone;
-    [SerializeField] private int swordsmanGold;
-    [SerializeField] private int swordsmanHorses;
-    [SerializeField] private int swordsmanBronze;
-    [SerializeField] private int swordsmanIron;
+    public int swordsmanFood;
+    public int swordsmanWood;
+    public int swordsmanStone;
+    public int swordsmanGold;
+    public int swordsmanHorses;
+    public int swordsmanBronze;
+    public int swordsmanIron;
     [Header("Catapult")]
-    [SerializeField] private int catapultFood;
-    [SerializeField] private int catapultWood;
-    [SerializeField] private int catapultStone;
-    [SerializeField] private int catapultGold;
-    [SerializeField] private int catapultHorses;
-    [SerializeField] private int catapultBronze;
-    [SerializeField] private int catapultIron;
+    public int catapultFood;
+    public int catapultWood;
+    public int catapultStone;
+    public int catapultGold;
+    public int catapultHorses;
+    public int catapultBronze;
+    public int catapultIron;
     [Header("Siege Tower")]
-    [SerializeField] private int siegeTowerFood;
-    [SerializeField] private int siegeTowerWood;
-    [SerializeField] private int siegeTowerStone;
-    [SerializeField] private int siegeTowerGold;
-    [SerializeField] private int siegeTowerHorses;
-    [SerializeField] private int siegeTowerBronze;
-    [SerializeField] private int siegeTowerIron;
+    public int siegeTowerFood;
+    public int siegeTowerWood;
+    public int siegeTowerStone;
+    public int siegeTowerGold;
+    public int siegeTowerHorses;
+    public int siegeTowerBronze;
+    public int siegeTowerIron;
     [Space(10)]
     [Header("Buildings Costs")]
     [Space(10)]
     [Header("Farm")]
-    [SerializeField] private int farmFood;
-    [SerializeField] private int farmWood;
-    [SerializeField] private int farmStone;
-    [SerializeField] private int farmGold;
-    [SerializeField] private int farmHorses;
-    [SerializeField] private int farmBronze;
-    [SerializeField] private int farmIron;
+    public int farmFood;
+    public int farmWood;
+    public int farmStone;
+    public int farmGold;
+    public int farmHorses;
+    public int farmBronze;
+    public int farmIron;
     [Header("Pasture")]
-    [SerializeField] private int pastureFood;
-    [SerializeField] private int pastureWood;
-    [SerializeField] private int pastureStone;
-    [SerializeField] private int pastureGold;
-    [SerializeField] private int pastureHorses;
-    [SerializeField] private int pastureBronze;
-    [SerializeField] private int pastureIron;
+    public int pastureFood;
+    public int pastureWood;
+    public int pastureStone;
+    public int pastureGold;
+    public int pastureHorses;
+    public int pastureBronze;
+    public int pastureIron;
     [Header("Fishing Boat")]
-    [SerializeField] private int fishingBoatFood;
-    [SerializeField] private int fishingBoatWood;
-    [SerializeField] private int fishingBoatStone;
-    [SerializeField] private int fishingBoatGold;
-    [SerializeField] private int fishingBoatHorses;
-    [SerializeField] private int fishingBoatBronze;
-    [SerializeField] private int fishingBoatIron;
+    public int fishingBoatFood;
+    public int fishingBoatWood;
+    public int fishingBoatStone;
+    public int fishingBoatGold;
+    public int fishingBoatHorses;
+    public int fishingBoatBronze;
+    public int fishingBoatIron;
     [Header("Lumber Mill")]
-    [SerializeField] private int lumberMillFood;
-    [SerializeField] private int lumberMillWood;
-    [SerializeField] private int lumberMillStone;
-    [SerializeField] private int lumberMillGold;
-    [SerializeField] private int lumberMillHorses;
-    [SerializeField] private int lumberMillBronze;
-    [SerializeField] private int lumberMillIron;
+    public int lumberMillFood;
+    public int lumberMillWood;
+    public int lumberMillStone;
+    public int lumberMillGold;
+    public int lumberMillHorses;
+    public int lumberMillBronze;
+    public int lumberMillIron;
     [Header("Quarry")]
-    [SerializeField] private int quarryFood;
-    [SerializeField] private int quarryWood;
-    [SerializeField] private int quarryStone;
-    [SerializeField] private int quarryGold;
-    [SerializeField] private int quarryHorses;
-    [SerializeField] private int quarryBronze;
-    [SerializeField] private int quarryIron;
+    public int quarryFood;
+    public int quarryWood;
+    public int quarryStone;
+    public int quarryGold;
+    public int quarryHorses;
+    public int quarryBronze;
+    public int quarryIron;
     [Header("Gold Mine")]
-    [SerializeField] private int goldMineFood;
-    [SerializeField] private int goldMineWood;
-    [SerializeField] private int goldMineStone;
-    [SerializeField] private int goldMineGold;
-    [SerializeField] private int goldMineHorses;
-    [SerializeField] private int goldMineBronze;
-    [SerializeField] private int goldMineIron;
+    public int goldMineFood;
+    public int goldMineWood;
+    public int goldMineStone;
+    public int goldMineGold;
+    public int goldMineHorses;
+    public int goldMineBronze;
+    public int goldMineIron;
     [Header("Stable")]
-    [SerializeField] private int stableFood;
-    [SerializeField] private int stableWood;
-    [SerializeField] private int stableStone;
-    [SerializeField] private int stableGold;
-    [SerializeField] private int stableHorses;
-    [SerializeField] private int stableBronze;
-    [SerializeField] private int stableIron;
+    public int stableFood;
+    public int stableWood;
+    public int stableStone;
+    public int stableGold;
+    public int stableHorses;
+    public int stableBronze;
+    public int stableIron;
     [Header("Mine")]
-    [SerializeField] private int mineFood;
-    [SerializeField] private int mineWood;
-    [SerializeField] private int mineStone;
-    [SerializeField] private int mineGold;
-    [SerializeField] private int mineHorses;
-    [SerializeField] private int mineBronze;
-    [SerializeField] private int mineIron;
+    public int mineFood;
+    public int mineWood;
+    public int mineStone;
+    public int mineGold;
+    public int mineHorses;
+    public int mineBronze;
+    public int mineIron;
     [Header("Blacksmith")]
-    [SerializeField] private int blacksmithFood;
-    [SerializeField] private int blacksmithWood;
-    [SerializeField] private int blacksmithStone;
-    [SerializeField] private int blacksmithGold;
-    [SerializeField] private int blacksmithHorses;
-    [SerializeField] private int blacksmithBronze;
-    [SerializeField] private int blacksmithIron;
+    public int blacksmithFood;
+    public int blacksmithWood;
+    public int blacksmithStone;
+    public int blacksmithGold;
+    public int blacksmithHorses;
+    public int blacksmithBronze;
+    public int blacksmithIron;
     [Header("Walls")]
-    [SerializeField] private int wallsFood;
-    [SerializeField] private int wallsWood;
-    [SerializeField] private int wallsStone;
-    [SerializeField] private int wallsGold;
-    [SerializeField] private int wallsHorses;
-    [SerializeField] private int wallsBronze;
-    [SerializeField] private int wallsIron;
+    public int wallsFood;
+    public int wallsWood;
+    public int wallsStone;
+    public int wallsGold;
+    public int wallsHorses;
+    public int wallsBronze;
+    public int wallsIron;
     [Space(10)]
     [Header("Cities")]
     [Space(10)]
-    [SerializeField] private int cityExpansionRadius;
-    [SerializeField] private int expansionFoodCount;
+    public int cityExpansionRadius;
+    public int expansionFoodCount;
     [Space(10)]
     [Header("Modifiers")]
-    [SerializeField] private float ordinaryResourcesModifier;
-    [SerializeField] private float strategicResourcesModifier;
-    [SerializeField] private float capitalModifier;
-    [SerializeField] private float riverModifier;
-    [Space(10)]
-    private Cell _goalCell;
-    private GameObject _clickedObject;
-    private GameObject _focusedObject;
-    private float _longPressDuration;
-    private float _pressStartTime;
-    [NonSerialized] public static Unit SelectedUnit;
-    [NonSerialized] public static City SelectedCity;
-    private Vector2 _touchPosition;
-    private float _touchDelta;
+    public float ordinaryResourcesModifier;
+    public float strategicResourcesModifier;
+    public float capitalModifier;
+    public float riverModifier;
 
     private void Awake()
     {
@@ -340,40 +256,36 @@ public class Map : MonoBehaviour
         {
             size = ES3.Load<Vector2Int>("size");
         }
-        _longPressDuration = 0.25f;
-        _touchDelta = 50f;
-        _cellOffsets = new Vector2[3];
-        _cellOffsets[0] = new Vector2(4.56f, 1.31f);
-        _cellOffsets[1] = new Vector2(1.32f, 0.35f);
-        _cellOffsets[2] = new Vector2(3.25f, 0.35f);
-        _riverOffsets = new Vector2[9];
-        _riverOffsets[0] = new Vector2(0.61f, 0.45f);
-        _riverOffsets[1] = new Vector2(0.85f, -0.35f);
-        _riverOffsets[2] = new Vector2(0.81f, -0.09f);
-        _riverOffsets[3] = new Vector2(0.27f, -0.65f);
-        _riverOffsets[4] = new Vector2(0.08f, -0.75f);
-        _riverOffsets[5] = new Vector2(0.84f, -0.74f);
-        _riverOffsets[6] = new Vector2(-0.74f, -0.55f);
-        _riverOffsets[7] = new Vector2(0.03f, -0.55f);
-        _riverOffsets[8] = new Vector2(-0.5f, -0.66f);
+        Cells = new Cell[size.y, size.x];
+        Rivers = new List<River>();
+        CellsOffsets = new Vector2[3];
+        CellsOffsets[0] = new Vector2(4.56f, 1.31f);
+        CellsOffsets[1] = new Vector2(1.32f, 0.35f);
+        CellsOffsets[2] = new Vector2(3.25f, 0.35f);
+        RiversOffsets = new Vector2[9];
+        RiversOffsets[0] = new Vector2(0.61f, 0.45f);
+        RiversOffsets[1] = new Vector2(0.85f, -0.35f);
+        RiversOffsets[2] = new Vector2(0.81f, -0.09f);
+        RiversOffsets[3] = new Vector2(0.27f, -0.65f);
+        RiversOffsets[4] = new Vector2(0.08f, -0.75f);
+        RiversOffsets[5] = new Vector2(0.84f, -0.74f);
+        RiversOffsets[6] = new Vector2(-0.74f, -0.55f);
+        RiversOffsets[7] = new Vector2(0.03f, -0.55f);
+        RiversOffsets[8] = new Vector2(-0.5f, -0.66f);
         _origin.y = size.y / 2;
         _origin.x = size.x / 2 - size.y / 4;
         _center = GetCellCoordinates(_origin.x + (_origin.x - 1) / 2, _origin.y);
         gameObject.GetComponent<Transform>().position -= (Vector3)_center;
-        Vector2 minCoord = GetCellCoordinates(0, 0);
-        Vector2 maxCoord = GetCellCoordinates(size.x - 1, size.y - 1);
-        MinX = minCoord.x - 1.5f;
-        MaxY = minCoord.y + 1.5f;
-        MaxX = maxCoord.x + 1.75f;
-        MinY = maxCoord.y - 1.85f;
+        Vector2 minCoordinates = GetCellCoordinates(0, 0);
+        Vector2 maxCoordinates = GetCellCoordinates(size.x - 1, size.y - 1);
+        MinX = minCoordinates.x - 1.5f;
+        MaxY = minCoordinates.y + 1.5f;
+        MaxX = maxCoordinates.x + 1.75f;
+        MinY = maxCoordinates.y - 1.85f;
         MenuEnabled = false;
+        _longPressDuration = 0.25f;
+        _touchDelta = 50f;
         CreatePhantomCells();
-        _cells = new GameObject[size.y, size.x];
-        _borders = new Border[size.y * 2 - 1, size.x * 2 - 1];
-        _rivers = new List<River>();
-        _riverSources = new HashSet<Border>();
-        _riverUsed = new HashSet<Border>();
-        _riverTempUsed = new HashSet<Border>();
         if (GameLogic.LoadGame)
         {
             LoadGame();
@@ -688,16 +600,17 @@ public class Map : MonoBehaviour
         {
             for (int j = 0; j < size.x; j++)
             {
-                _cells[i, j] = Instantiate(cellPrefab, GetCellCoordinates(j, i),
+                GameObject cell = Instantiate(cellPrefab, GetCellCoordinates(j, i),
                     GetCellAngle(j, i), transform);
-                _cells[i, j].GetComponent<Cell>().Init(j, i, GetCellType(j, i));
+                cell.GetComponent<Cell>().Init(j, i, GetCellType(j, i));
+                Cells[i, j] = cell.GetComponent<Cell>();
             }
         }
         for (int i = 0; i < size.y; i++)
         {
             for (int j = 0; j < size.x; j++)
             {
-                SetCellNeighbors(_cells[i, j].GetComponent<Cell>());
+                SetCellNeighbors(Cells[i, j]);
             }
         }
         GameLogic.Civs = new Civilization[Enum.GetValues(typeof(CivilizationName)).Length];
@@ -988,12 +901,11 @@ public class Map : MonoBehaviour
         GameLogic.StrategicResourcesModifier = strategicResourcesModifier;
         GameLogic.CapitalModifier = capitalModifier;
         GameLogic.RiverModifier = riverModifier;
-        _altitudeSeed = Random.Range(1, 100000);
-        _humiditySeed = Random.Range(1, 100000);
-        GenerateTerrain();
-        GenerateRivers();
-        GenerateResources();
-        GenerateCivilizations();
+        generator.GenerateTerrain();
+        generator.GenerateRivers();
+        generator.GenerateResources();
+        generator.GenerateCivilizations();
+        _focusedObject = GameLogic.Civs[0].Units[0].gameObject;
     }
     
     public void LoadGame()
@@ -1041,93 +953,93 @@ public class Map : MonoBehaviour
         {
             for (int j = 0; j < size.x; j++)
             {
-                _cells[i, j] = Instantiate(cellPrefab, GetCellCoordinates(j, i),
+                GameObject cell = Instantiate(cellPrefab, GetCellCoordinates(j, i),
                     GetCellAngle(j, i), transform);
-                _cells[i, j].GetComponent<Cell>().Init(cellsData[i, j]);
-                _cells[i, j].GetComponent<Cell>().SetTerraIncognitaColor();
+                cell.GetComponent<Cell>().Init(cellsData[i, j]);
+                cell.GetComponent<Cell>().SetTerraIncognitaColor();
+                Cells[i, j] = cell.GetComponent<Cell>();
                 if (cellsData[i, j].resourceType != ResourceType.None)
                 {
                     switch (cellsData[i, j].resourceType)
                     {
                         case ResourceType.Wheat:
-                            _cells[i, j].GetComponent<Cell>().resource =
+                            Cells[i, j].resource =
                                 Instantiate(resourcesPrefabs[0],
-                                    new Vector3(_cells[i, j].transform.position.x,
-                                        _cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
+                                    new Vector3(Cells[i, j].transform.position.x,
+                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
                             break;
                         case ResourceType.Cattle:
-                            _cells[i, j].GetComponent<Cell>().resource =
+                            Cells[i, j].resource =
                                 Instantiate(resourcesPrefabs[1],
-                                    new Vector3(_cells[i, j].transform.position.x,
-                                        _cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
+                                    new Vector3(Cells[i, j].transform.position.x,
+                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
                             break;
                         case ResourceType.Fish:
-                            _cells[i, j].GetComponent<Cell>().resource =
+                            Cells[i, j].resource =
                                 Instantiate(resourcesPrefabs[2],
-                                    new Vector3(_cells[i, j].transform.position.x,
-                                        _cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
+                                    new Vector3(Cells[i, j].transform.position.x,
+                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
                             break;
                         case ResourceType.Wood:
-                            _cells[i, j].GetComponent<Cell>().resource =
+                            Cells[i, j].resource =
                                 Instantiate(resourcesPrefabs[3],
-                                    new Vector3(_cells[i, j].transform.position.x,
-                                        _cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
+                                    new Vector3(Cells[i, j].transform.position.x,
+                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
                             break;
                         case ResourceType.Stone:
-                            _cells[i, j].GetComponent<Cell>().resource =
+                            Cells[i, j].resource =
                                 Instantiate(resourcesPrefabs[4],
-                                    new Vector3(_cells[i, j].transform.position.x,
-                                        _cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
+                                    new Vector3(Cells[i, j].transform.position.x,
+                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
                             break;
                         case ResourceType.Gold:
-                            _cells[i, j].GetComponent<Cell>().resource =
+                            Cells[i, j].resource =
                                 Instantiate(resourcesPrefabs[5],
-                                    new Vector3(_cells[i, j].transform.position.x,
-                                        _cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
+                                    new Vector3(Cells[i, j].transform.position.x,
+                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
                             break;
                         case ResourceType.Horses:
-                            _cells[i, j].GetComponent<Cell>().resource =
+                            Cells[i, j].resource =
                                 Instantiate(resourcesPrefabs[6],
-                                    new Vector3(_cells[i, j].transform.position.x,
-                                        _cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
+                                    new Vector3(Cells[i, j].transform.position.x,
+                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
                             break;
                         case ResourceType.Copper:
-                            _cells[i, j].GetComponent<Cell>().resource =
+                            Cells[i, j].resource =
                                 Instantiate(resourcesPrefabs[7],
-                                    new Vector3(_cells[i, j].transform.position.x,
-                                        _cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
+                                    new Vector3(Cells[i, j].transform.position.x,
+                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
                             break;
                         case ResourceType.Iron:
-                            _cells[i, j].GetComponent<Cell>().resource =
+                            Cells[i, j].resource =
                                 Instantiate(resourcesPrefabs[8],
-                                    new Vector3(_cells[i, j].transform.position.x,
-                                        _cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
+                                    new Vector3(Cells[i, j].transform.position.x,
+                                        Cells[i, j].transform.position.y, -1), Quaternion.identity, transform);
                             break;
                     }
-                    _cells[i, j].GetComponent<Cell>().resource.SetActive(false);
+                    Cells[i, j].resource.SetActive(false);
                 }
                 if (cellsData[i, j].rivers.Count > 0)
                 {
                     foreach (RiverData riverData in cellsData[i, j].rivers)
                     {
-                        River river = _rivers.FirstOrDefault(river => river.coordinates == riverData.coordinates);
+                        River river = Rivers.FirstOrDefault(river => river.coordinates == riverData.coordinates);
                         if (river == null)
                         {
                             Vector2Int coord = riverData.coordinates;
-                            river = Instantiate(riverPrefab,
-                                GetRiverCoordinates(coord.x, coord.y),
+                            river = Instantiate(riverPrefab, GetRiverCoordinates(coord.x, coord.y),
                                 GetRiverAngle(coord.x, coord.y), transform).GetComponent<River>();
-                            river.transform.localScale = new Vector3(GetRiverLength(coord.x, coord.y), 0.20f,
-                                -1f);
+                            river.transform.localScale = new Vector3(GetRiverLength(coord.x, coord.y),
+                                0.20f, -1f);
                             river.Init(riverData);
-                            river.cell1 = _cells[i, j].GetComponent<Cell>();
-                            _cells[i, j].GetComponent<Cell>().rivers.Add(river);
-                            _rivers.Add(river);
+                            river.cell1 = Cells[i, j];
+                            Cells[i, j].rivers.Add(river);
+                            Rivers.Add(river);
                         }
                         else
                         {
-                            river.cell2 = _cells[i, j].GetComponent<Cell>();
-                            _cells[i, j].GetComponent<Cell>().rivers.Add(river);
+                            river.cell2 = Cells[i, j];
+                            Cells[i, j].rivers.Add(river);
                         }
                     }
                 }
@@ -1137,10 +1049,10 @@ public class Map : MonoBehaviour
         {
             for (int j = 0; j < size.x; j++)
             {
-                SetCellNeighbors(_cells[i, j].GetComponent<Cell>());
+                SetCellNeighbors(Cells[i, j]);
             }
         }
-        foreach (River river in _rivers)
+        foreach (River river in Rivers)
         {
             SetRiverNeighbors(river);
             river.gameObject.SetActive(false);
@@ -1153,14 +1065,14 @@ public class Map : MonoBehaviour
                 {
                     Civilization civ =
                         GameLogic.Civs.FirstOrDefault(civ => civ.Name == cellsData[i, j].unit.owner);
-                    CreateUnit(cellsData[i, j].unit, _cells[i, j].GetComponent<Cell>(), civ);
+                    CreateUnit(cellsData[i, j].unit, Cells[i, j], civ);
                 }
                 if (cellsData[i, j].city != null
                     && cellsData[i, j].city.coreCellCoordinates == cellsData[i, j].offsetCoordinates)
                 {
                     Civilization civ =
                         GameLogic.Civs.FirstOrDefault(civ => civ.Name == cellsData[i, j].city.owner);
-                    CreateCity(cellsData[i,j].city, _cells[i, j].GetComponent<Cell>(), civ);
+                    CreateCity(cellsData[i,j].city, Cells[i, j], civ);
                 }
                 foreach (Civilization civ in GameLogic.Civs)
                 {
@@ -1168,9 +1080,9 @@ public class Map : MonoBehaviour
                     {
                         if (civ.Name == GameLogic.SelectedCiv)
                         {
-                            if (_cells[i, j].GetComponent<Cell>().rivers.Count > 0)
+                            if (Cells[i, j].rivers.Count > 0)
                             {
-                                foreach (River river in _cells[i, j].GetComponent<Cell>().rivers)
+                                foreach (River river in Cells[i, j].rivers)
                                 {
                                     if (cellsData[river.cell1.offsetCoordinates.y,
                                             river.cell1.offsetCoordinates.x].IsExplored[GameLogic.SelectedCiv]
@@ -1181,12 +1093,12 @@ public class Map : MonoBehaviour
                                     }
                                 }
                             }
-                            if (_cells[i, j].GetComponent<Cell>().resource != null)
+                            if (Cells[i, j].resource != null)
                             {
-                                _cells[i, j].GetComponent<Cell>().resource.SetActive(true);
+                                Cells[i, j].resource.SetActive(true);
                             }
                         }
-                        civ.ExploredCells.Add(_cells[i, j].GetComponent<Cell>());
+                        civ.ExploredCells.Add(Cells[i, j]);
                     }
                 }
             }
@@ -1210,7 +1122,7 @@ public class Map : MonoBehaviour
         {
             for (int j = 0; j < size.x; j++)
             {
-                cellsData[i, j] = _cells[i, j].GetComponent<Cell>().CollectCellData();
+                cellsData[i, j] = Cells[i, j].CollectCellData();
             }
         }
         ES3.Save("cells", cellsData);
@@ -1238,7 +1150,6 @@ public class Map : MonoBehaviour
                 return clickedObject;
             }
         }
-
         return null;
     }
     
@@ -1247,14 +1158,46 @@ public class Map : MonoBehaviour
         if (Input.touchCount > 0 && Camera.main != null)
         {
             Vector3 touchPosition = Camera.main.ScreenToWorldPoint(Input.GetTouch(0).position);
-            Collider2D collider = Physics2D.OverlapPoint(touchPosition);
-            if (collider != null)
+            Collider2D pointCollider = Physics2D.OverlapPoint(touchPosition);
+            if (pointCollider != null)
             {
-                GameObject touchedObject = collider.gameObject;
+                GameObject touchedObject = pointCollider.gameObject;
                 return touchedObject;
             }
         }
         return null;
+    }
+    
+    private void CreatePhantomCells()
+    {
+        GameObject phantomCell;
+        for (int i = -1; i < size.y + 1; i++)
+        {
+            if (i % 2 == 0)
+            {
+                phantomCell = Instantiate(phantomCellPrefab, GetCellCoordinates(-5, i),
+                    GetCellAngle(-5, i), transform);
+                phantomCell.GetComponent<SpriteRenderer>().color = new Color(0.75f, 0.75f, 0.75f);
+            }
+            else
+            {
+                phantomCell = Instantiate(phantomCellPrefab, GetCellCoordinates(-1, i),
+                    GetCellAngle(-1, i), transform);
+                phantomCell.GetComponent<SpriteRenderer>().color = new Color(0.75f, 0.75f, 0.75f);
+            }
+            phantomCell = Instantiate(phantomCellPrefab, GetCellCoordinates(size.x, i),
+                GetCellAngle(size.x, i), transform);
+            phantomCell.GetComponent<SpriteRenderer>().color = new Color(0.75f, 0.75f, 0.75f);
+        }
+        for (int j = 0; j < size.x; j++)
+        {
+            phantomCell = Instantiate(phantomCellPrefab, GetCellCoordinates(j, -1),
+                GetCellAngle(j, -1), transform);
+            phantomCell.GetComponent<SpriteRenderer>().color = new Color(0.75f, 0.75f, 0.75f);
+            phantomCell = Instantiate(phantomCellPrefab, GetCellCoordinates(j, size.y),
+                GetCellAngle(j, size.y), transform);
+            phantomCell.GetComponent<SpriteRenderer>().color = new Color(0.75f, 0.75f, 0.75f);
+        }
     }
     
     private Vector2 GetCellCoordinates(int x, int y)
@@ -1264,26 +1207,26 @@ public class Map : MonoBehaviour
             switch (x % 3)
             {
                 case 0:
-                    return new Vector2(_cellOffsets[0].x * (x / 3), -(_cellOffsets[0].y * y));
+                    return new Vector2(CellsOffsets[0].x * (x / 3), -(CellsOffsets[0].y * y));
                 case 1:
-                    return new Vector2(_cellOffsets[0].x * (x / 3) + _cellOffsets[1].x,
-                        -(_cellOffsets[0].y * y) + _cellOffsets[1].y);
+                    return new Vector2(CellsOffsets[0].x * (x / 3) + CellsOffsets[1].x,
+                        -(CellsOffsets[0].y * y) + CellsOffsets[1].y);
                 default:
-                    return new Vector2(_cellOffsets[0].x * (x / 3) + _cellOffsets[2].x,
-                        -(_cellOffsets[0].y * y) + _cellOffsets[2].y);
+                    return new Vector2(CellsOffsets[0].x * (x / 3) + CellsOffsets[2].x,
+                        -(CellsOffsets[0].y * y) + CellsOffsets[2].y);
             }
         }
         switch ((x + 2) % 3)
         {
             case 0:
-                return new Vector2(_cellOffsets[0].x * ((x + 2) / 3) - _cellOffsets[0].x / 2,
-                    -(_cellOffsets[0].y * y));
+                return new Vector2(CellsOffsets[0].x * ((x + 2) / 3) - CellsOffsets[0].x / 2,
+                    -(CellsOffsets[0].y * y));
             case 1:
-                return new Vector2(_cellOffsets[0].x * ((x + 2) / 3) + _cellOffsets[1].x - _cellOffsets[0].x / 2,
-                    -(_cellOffsets[0].y * y) + _cellOffsets[1].y);
+                return new Vector2(CellsOffsets[0].x * ((x + 2) / 3) + CellsOffsets[1].x - CellsOffsets[0].x / 2,
+                    -(CellsOffsets[0].y * y) + CellsOffsets[1].y);
             default:
-                return new Vector2(_cellOffsets[0].x * ((x + 2) / 3) + _cellOffsets[2].x - _cellOffsets[0].x / 2,
-                    -(_cellOffsets[0].y * y) + _cellOffsets[2].y);
+                return new Vector2(CellsOffsets[0].x * ((x + 2) / 3) + CellsOffsets[2].x - CellsOffsets[0].x / 2,
+                    -(CellsOffsets[0].y * y) + CellsOffsets[2].y);
         }
     }
     
@@ -1365,221 +1308,10 @@ public class Map : MonoBehaviour
         {
             return null;
         }
-        return _cells[y, x].GetComponent<Cell>();
+        return Cells[y, x];
     }
     
-    private void CreatePhantomCells()
-    {
-        GameObject phantomCell;
-        for (int i = -1; i < size.y + 1; i++)
-        {
-            if (i % 2 == 0)
-            {
-                phantomCell = Instantiate(phantomCellPrefab, GetCellCoordinates(-5, i),
-                    GetCellAngle(-5, i), transform);
-                phantomCell.GetComponent<SpriteRenderer>().color = new Color(0.75f, 0.75f, 0.75f);
-            }
-            else
-            {
-                phantomCell = Instantiate(phantomCellPrefab, GetCellCoordinates(-1, i),
-                    GetCellAngle(-1, i), transform);
-                phantomCell.GetComponent<SpriteRenderer>().color = new Color(0.75f, 0.75f, 0.75f);
-            }
-            phantomCell = Instantiate(phantomCellPrefab, GetCellCoordinates(size.x, i),
-                GetCellAngle(size.x, i), transform);
-            phantomCell.GetComponent<SpriteRenderer>().color = new Color(0.75f, 0.75f, 0.75f);
-        }
-        for (int j = 0; j < size.x; j++)
-        {
-            phantomCell = Instantiate(phantomCellPrefab, GetCellCoordinates(j, -1),
-                GetCellAngle(j, -1), transform);
-            phantomCell.GetComponent<SpriteRenderer>().color = new Color(0.75f, 0.75f, 0.75f);
-            phantomCell = Instantiate(phantomCellPrefab, GetCellCoordinates(j, size.y),
-                GetCellAngle(j, size.y), transform);
-            phantomCell.GetComponent<SpriteRenderer>().color = new Color(0.75f, 0.75f, 0.75f);
-        }
-    }
-
-    private void GenerateTerrain()
-    {
-        for (int i = 0; i < size.y; i++)
-        {
-            for (int j = 0; j < size.x; j++)
-            {
-                float x = (j + _altitudeSeed) / (float)altitudeScale;
-                float y = (i + _altitudeSeed) / (float)altitudeScale;
-                _cells[i, j].GetComponent<Cell>().altitude = Mathf.PerlinNoise(x, y) + altitudeA - altitudeB
-                    * (float)Math.Pow(GetDistance(j, i), altitudeC);
-                x = (j + _humiditySeed) / (float)humidityScale;
-                y = (i + _humiditySeed) / (float)humidityScale;
-                _cells[i, j].GetComponent<Cell>().humidity = Mathf.PerlinNoise(x, y);
-            }
-        }
-        NormalizeCells();
-        SelectCellTerrain(waterMinAltitude, waterMaxAltitude, waterMinHumidity,
-            waterMaxHumidity, Terrain.Water);
-        SelectCellTerrain(desertMinAltitude, desertMaxAltitude, desertMinHumidity,
-            desertMaxHumidity, Terrain.Desert);
-        SelectCellTerrain(plainMinAltitude, plainMaxAltitude, plainMinHumidity,
-            plainMaxHumidity, Terrain.Plain);
-        SelectCellTerrain(forestMinAltitude, forestMaxAltitude, forestMinHumidity,
-            forestMaxHumidity, Terrain.Forest);
-        SelectCellTerrain(desertHillsMinAltitude, desertHillsMaxAltitude,
-            desertHillsMinHumidity, desertHillsMaxHumidity, Terrain.DesertHills);
-        SelectCellTerrain(hillsMinAltitude, hillsMaxAltitude, hillsMinHumidity,
-            hillsMaxHumidity, Terrain.Hills);
-        SelectCellTerrain(mountainsMinAltitude, mountainsMaxAltitude,
-            mountainsMinHumidity, mountainsMaxHumidity, Terrain.Mountains);
-        CreateWaterBorder();
-    }
-    
-    private float GetDistance(int x, int y)
-    {
-        float distX = Math.Abs(x - size.x / 2) / (float)(size.x / 2);
-        float distY = Math.Abs(y - size.y / 2) / (float)(size.y / 2);
-        return (float)Math.Sqrt(Math.Pow(distX, 2) + Math.Pow(distY, 2));
-    }
-    
-    private void NormalizeCells()
-    {
-        float minAltitude = float.MaxValue;
-        float maxAltitude = float.MinValue;
-        float minHumidity = float.MaxValue;
-        float maxHumidity = float.MinValue;
-        foreach (GameObject cellObject in _cells)
-        {
-            Cell cell = cellObject.GetComponent<Cell>();
-            if (cell != null)
-            {
-                minAltitude = Mathf.Min(minAltitude, cell.altitude);
-                maxAltitude = Mathf.Max(maxAltitude, cell.altitude);
-                minHumidity = Mathf.Min(minHumidity, cell.humidity);
-                maxHumidity = Mathf.Max(maxHumidity, cell.humidity);
-            }
-        }
-        foreach (GameObject cellObject in _cells)
-        {
-            Cell cell = cellObject.GetComponent<Cell>();
-            if (cell != null)
-            {
-                cell.altitude = NormalizeValue(cell.altitude, minAltitude, maxAltitude);
-                cell.humidity = NormalizeValue(cell.humidity, minHumidity, maxHumidity);
-            }
-        }
-    }
-
-    private float NormalizeValue(float value, float min, float max)
-    {
-        return (value - min) / (max - min);
-    }
-    
-    private void SelectCellTerrain(int startPercent1, int endPercent1, int startPercent2, int endPercent2,
-        Terrain terrain)
-    {
-        Cell[] cellArray = _cells.Cast<GameObject>().Select(go => go.GetComponent<Cell>()).ToArray();
-        Array.Sort(cellArray, (x, y) => x.altitude.CompareTo(y.altitude));
-        int startIdx1 = (int)(cellArray.Length * (startPercent1 / 100f));
-        int endIdx1 = (int)(cellArray.Length * (endPercent1 / 100f));
-        Cell[] selectedCellsByAltitude = cellArray.Skip(startIdx1).Take(endIdx1 - startIdx1).ToArray();
-        Array.Sort(cellArray, (x, y) => x.humidity.CompareTo(y.humidity));
-        int startIdx2 = (int)(cellArray.Length * (startPercent2 / 100f));
-        int endIdx2 = (int)(cellArray.Length * (endPercent2 / 100f));
-        Cell[] selectedCellsByHumidity = cellArray.Skip(startIdx2).Take(endIdx2 - startIdx2).ToArray();
-        Cell[] finalSelectedCells = selectedCellsByAltitude.Intersect(selectedCellsByHumidity).ToArray();
-        foreach (var cell in finalSelectedCells)
-        {
-            cell.terrain = terrain;
-            cell.SetTerraIncognitaColor();
-        }
-    }
-
-    private void CreateWaterBorder()
-    {
-        for (int i = 0; i < size.y; i++)
-        {
-            for (int j = 0; j < size.x; j++)
-            {
-                if (i % 2 == 0 && (j <= 1 || j == size.x - 1) || i % 2 != 0 && (j == 0 || j >= size.x - 2)
-                                                              || i == 0 || i == size.y - 1)
-                {
-                    _cells[i, j].GetComponent<Cell>().terrain = Terrain.Water;
-                    _cells[i, j].GetComponent<Cell>().SetTerraIncognitaColor();
-                }
-            }
-        }
-    }
-
-    private void GenerateRivers()
-    {
-        for (int i = 0; i < _borders.GetLength(0); i++)
-        {
-            if (i % 2 == 0)
-            {
-                for (int j = 0; j < size.x - 1; j++)
-                {
-                    _borders[i, j * 2] = new Border(new Vector2Int(j * 2, i),
-                        _cells[i / 2, j].GetComponent<Cell>(),
-                        _cells[i / 2, j + 1].GetComponent<Cell>());
-                }
-            }
-            else
-            {
-                if ((i - 1) % 4 == 0)
-                {
-                    for (int j = 0; j < _borders.GetLength(1); j++)
-                    {
-                        _borders[i, j] = new Border(new Vector2Int(j, i),
-                            _cells[i / 2, j - j / 2].GetComponent<Cell>(),
-                            _cells[i - i / 2, j / 2].GetComponent<Cell>());
-                    }
-                }
-                else
-                {
-                    for (int j = 0; j < _borders.GetLength(1); j++)
-                    {
-                        _borders[i, j] = new Border(new Vector2Int(j, i),
-                            _cells[i / 2, j - (j + 1) / 2].GetComponent<Cell>(),
-                            _cells[i - i / 2, (j + 1) / 2].GetComponent<Cell>());
-                    }
-                }
-            }
-        }
-        for (int i = 0; i < _borders.GetLength(0); i++)
-        {
-            for (int j = 0; j < _borders.GetLength(1); j++)
-            {
-                if (_borders[i, j] != null)
-                {
-                    SetBorderNeighbors(_borders[i, j]);
-                }
-            }
-        }
-        SelectRiverSources(riverSourcesMinAltitude, riverSourcesMaxAltitude);
-        bool result;
-        int attempts = 0;
-        int k = 0;
-        Border source;
-        while (_riverSources.Count > 0 && k < riverMaxCount && attempts < riverGenAttempts)
-        {
-            source = _riverSources.ElementAt(Random.Range(0, _riverSources.Count));
-            result = SetRiverPath(source, k);
-            _riverSources.Remove(source);
-            if (!result)
-            {
-                attempts++;
-            }
-            else
-            {
-                k++;
-            }
-        }
-        foreach (River river in _rivers)
-        {
-            river.gameObject.SetActive(false);
-        }
-    }
-    
-    private Vector3 GetRiverCoordinates(int x, int y)
+    public Vector3 GetRiverCoordinates(int x, int y)
     {
         if (y % 2 == 0)
         {
@@ -1588,30 +1320,30 @@ public class Map : MonoBehaviour
                 switch (x / 2 % 3)
                 {
                     case 0:
-                        return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x +
-                                           _riverOffsets[0].x,
-                            _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[0].y, -1);
+                        return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x +
+                                           RiversOffsets[0].x,
+                            Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[0].y, -1);
                     case 1:
-                        return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x +
-                                           _riverOffsets[1].x,
-                            _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[1].y, -1);
+                        return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x +
+                                           RiversOffsets[1].x,
+                            Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[1].y, -1);
                     default:
-                        return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x +
-                                           _riverOffsets[2].x,
-                            _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[2].y, -1);
+                        return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x +
+                                           RiversOffsets[2].x,
+                            Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[2].y, -1);
                 }
             }
             switch (x / 2 % 3)
             {
                 case 0:
-                    return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x + _riverOffsets[2].x,
-                        _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[2].y, -1);
+                    return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x + RiversOffsets[2].x,
+                        Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[2].y, -1);
                 case 1:
-                    return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x + _riverOffsets[0].x,
-                        _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[0].y, -1);
+                    return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x + RiversOffsets[0].x,
+                        Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[0].y, -1);
                 default:
-                    return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x + _riverOffsets[1].x,
-                        _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[1].y, -1);
+                    return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x + RiversOffsets[1].x,
+                        Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[1].y, -1);
             }
         }
         if ((y - 1) % 4 == 0)
@@ -1619,55 +1351,55 @@ public class Map : MonoBehaviour
             switch (x % 6)
             {
                 case 0:
-                    return new Vector3(_cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
-                                       _riverOffsets[3].x,
-                        _cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + _riverOffsets[3].y, -1);
+                    return new Vector3(Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
+                                       RiversOffsets[3].x,
+                        Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + RiversOffsets[3].y, -1);
                 case 1:
-                    return new Vector3(_cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
-                                       _riverOffsets[4].x,
-                        _cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + _riverOffsets[4].y, -1);
+                    return new Vector3(Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
+                                       RiversOffsets[4].x,
+                        Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + RiversOffsets[4].y, -1);
                 case 2:
-                    return new Vector3(_cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
-                                       _riverOffsets[5].x,
-                        _cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + _riverOffsets[5].y, -1);
+                    return new Vector3(Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
+                                       RiversOffsets[5].x,
+                        Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + RiversOffsets[5].y, -1);
                 case 3:
-                    return new Vector3(_cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
-                                       _riverOffsets[6].x,
-                        _cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + _riverOffsets[6].y, -1);
+                    return new Vector3(Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
+                                       RiversOffsets[6].x,
+                        Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + RiversOffsets[6].y, -1);
                 case 4:
-                    return new Vector3(_cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
-                                       _riverOffsets[7].x,
-                        _cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + _riverOffsets[7].y, -1);
+                    return new Vector3(Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
+                                       RiversOffsets[7].x,
+                        Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + RiversOffsets[7].y, -1);
                 default:
-                    return new Vector3(_cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
-                                       _riverOffsets[8].x,
-                        _cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + _riverOffsets[8].y, -1);
+                    return new Vector3(Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.x +
+                                       RiversOffsets[8].x,
+                        Cells[y / 2, (x + 1) / 2].GetComponent<Transform>().position.y + RiversOffsets[8].y, -1);
             }
         }
         switch (x % 6)
         {
             case 0:
-                return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x + _riverOffsets[6].x,
-                    _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[6].y, -1);
+                return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x + RiversOffsets[6].x,
+                    Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[6].y, -1);
             case 1:
-                return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x + _riverOffsets[7].x,
-                    _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[7].y, -1);
+                return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x + RiversOffsets[7].x,
+                    Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[7].y, -1);
             case 2:
-                return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x + _riverOffsets[8].x,
-                    _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[8].y, -1);
+                return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x + RiversOffsets[8].x,
+                    Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[8].y, -1);
             case 3:
-                return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x + _riverOffsets[3].x,
-                    _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[3].y, -1);
+                return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x + RiversOffsets[3].x,
+                    Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[3].y, -1);
             case 4:
-                return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x + _riverOffsets[4].x,
-                    _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[4].y, -1);
+                return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x + RiversOffsets[4].x,
+                    Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[4].y, -1);
             default:
-                return new Vector3(_cells[y / 2, x / 2].GetComponent<Transform>().position.x + _riverOffsets[5].x,
-                    _cells[y / 2, x / 2].GetComponent<Transform>().position.y + _riverOffsets[5].y, -1);
+                return new Vector3(Cells[y / 2, x / 2].GetComponent<Transform>().position.x + RiversOffsets[5].x,
+                    Cells[y / 2, x / 2].GetComponent<Transform>().position.y + RiversOffsets[5].y, -1);
         }
     }
     
-    private Quaternion GetRiverAngle(int x, int y)
+    public Quaternion GetRiverAngle(int x, int y)
     {
         if (y % 2 == 0)
         {
@@ -1728,7 +1460,7 @@ public class Map : MonoBehaviour
         }
     }
     
-    private float GetRiverLength(int x, int y)
+    public float GetRiverLength(int x, int y)
     {
         if (y % 2 == 0)
         {
@@ -1789,54 +1521,6 @@ public class Map : MonoBehaviour
         }
     }
     
-    private void SetBorderNeighbors(Border border)
-    {
-        if (border.Coordinates.y % 2 == 0)
-        {
-            if (border.Coordinates.y % 4 == 0)
-            {
-                border.Neighbors[0] = IsBorderExist(border.Coordinates.x + 1, border.Coordinates.y - 1);
-                border.Neighbors[1] = IsBorderExist(border.Coordinates.x + 1, border.Coordinates.y + 1);
-                border.Neighbors[2] = IsBorderExist(border.Coordinates.x, border.Coordinates.y + 1);
-                border.Neighbors[3] = IsBorderExist(border.Coordinates.x, border.Coordinates.y - 1);
-            }
-            else
-            {
-                border.Neighbors[0] = IsBorderExist(border.Coordinates.x + 2, border.Coordinates.y - 1);
-                border.Neighbors[1] = IsBorderExist(border.Coordinates.x + 2, border.Coordinates.y + 1);
-                border.Neighbors[2] = IsBorderExist(border.Coordinates.x + 1, border.Coordinates.y + 1);
-                border.Neighbors[3] = IsBorderExist(border.Coordinates.x + 1, border.Coordinates.y - 1);
-            }
-        }
-        else
-        {
-            if ((border.Coordinates.y - 1) % 4 == 0)
-            {
-                border.Neighbors[0] = IsBorderExist(border.Coordinates.x / 2 * 2, border.Coordinates.y - 1);
-                border.Neighbors[1] = IsBorderExist(border.Coordinates.x + 1, border.Coordinates.y);
-                border.Neighbors[2] = IsBorderExist((border.Coordinates.x - 1) / 2 * 2, border.Coordinates.y + 1);
-                border.Neighbors[3] = IsBorderExist(border.Coordinates.x - 1, border.Coordinates.y);
-            }
-            else
-            {
-                border.Neighbors[0] = IsBorderExist(border.Coordinates.x + 1, border.Coordinates.y);
-                border.Neighbors[1] = IsBorderExist(border.Coordinates.x / 2 * 2, border.Coordinates.y + 1);
-                border.Neighbors[2] = IsBorderExist(border.Coordinates.x - 1, border.Coordinates.y);
-                border.Neighbors[3] = IsBorderExist((border.Coordinates.x - 1) / 2 * 2, border.Coordinates.y - 1);
-            }
-        }
-    }
-    
-    private Border IsBorderExist(int x, int y)
-    {
-        if (x < 0 || ((x >= _borders.GetLength(1) - 2 || x % 2 != 0) && y % 2 == 0)
-                  || (x >= _borders.GetLength(1) && x % 2 != 0) || y < 0 || y >= _borders.GetLength(0))
-        {
-            return null;
-        }
-        return _borders[y, x];
-    }
-    
     private void SetRiverNeighbors(River river)
     {
         if (river.coordinates.y % 2 == 0)
@@ -1877,392 +1561,12 @@ public class Map : MonoBehaviour
     
     private River IsRiverExist(int x, int y)
     {
-        River river = _rivers.FirstOrDefault(river => river.coordinates.x == x && river.coordinates.y == y);
+        River river = Rivers.FirstOrDefault(river => river.coordinates.x == x && river.coordinates.y == y);
         if (river != null)
         {
             return river;
         }
         return null;
-    }
-    
-    private void SelectRiverSources(int startPercent, int endPercent)
-    {
-        Border[] borderArray = _borders.Cast<Border>().Where(b => b != null).ToArray();
-        Array.Sort(borderArray, (x, y) => x.Altitude.CompareTo(y.Altitude));
-        int startIdx = (int)(borderArray.Length * (startPercent / 100f));
-        int endIdx = (int)(borderArray.Length * (endPercent / 100f));
-        Border[] selectedBorders = borderArray.Skip(startIdx).Take(endIdx - startIdx).ToArray();
-        foreach (var border in selectedBorders)
-        {
-            if (border.Cell1.terrain == border.Cell2.terrain && border.Cell1.terrain != Terrain.Water
-                                                             && border.Cell1.terrain != Terrain.Mountains)
-            {
-                _riverSources.Add(border);
-            }
-        }
-    }
-
-    private bool SetRiverPath(Border border, int id)
-    {
-        _riverTempUsed.Clear();
-        List<Border> riverPath = new List<Border>();
-        riverPath.Add(border);
-        bool flag = true;
-        int startIndex = _rivers.Count;
-        while (flag)
-        {
-            if (riverPath.Count == 0)
-            {
-                return false;
-            }
-            border = SetRiverDirection(riverPath.Last());
-            if (border is not null)
-            {
-                _riverTempUsed.Add(border);
-                riverPath.Add(border);
-            }
-            else
-            {
-                border = riverPath.Last();
-                for (int i = 0; i < 4; i++)
-                {
-                    if (border.Neighbors[i] != null && (border.Neighbors[i].Cell1.terrain == Terrain.Water ||
-                        border.Neighbors[i].Cell2.terrain == Terrain.Water))
-                    {
-                        flag = false;
-                        break;
-                    }
-                }
-                if (flag)
-                {
-                    _riverTempUsed.Add(border);
-                    riverPath.RemoveAt(riverPath.Count - 1);
-                }
-            }
-        }
-        foreach (Border b in riverPath)
-        {
-            GameObject river = Instantiate(riverPrefab, 
-                GetRiverCoordinates(b.Coordinates.x, b.Coordinates.y),
-                GetRiverAngle(b.Coordinates.x, b.Coordinates.y), transform);
-            river.GetComponent<Transform>().localScale =
-                new Vector3(GetRiverLength(b.Coordinates.x, b.Coordinates.y), 0.20f, -1f);
-            river.GetComponent<River>().Init(id + 1, b);
-            _rivers.Add(river.GetComponent<River>());
-            UseBordersInRadius(b, riverBetweenMinDistance);
-            b.Cell1.rivers.Add(river.GetComponent<River>());
-            b.Cell2.rivers.Add(river.GetComponent<River>());
-            if (b.Cell1.terrain == Terrain.Desert)
-            {
-                b.Cell1.terrain = Terrain.Floodplain;
-            }
-            if (b.Cell2.terrain == Terrain.Desert)
-            {
-                b.Cell2.terrain = Terrain.Floodplain;
-            }
-        }
-        for (int i = 0; i < riverPath.Count; i++)
-        {
-            if (i == 0)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    if (riverPath[i].Neighbors[j] != null
-                        && _rivers[startIndex + 1].coordinates == riverPath[i].Neighbors[j].Coordinates)
-                    {
-                        _rivers[startIndex].neighbors[j] = _rivers[startIndex + 1];
-                        break;
-                    }
-                }
-            }
-            else if (i == riverPath.Count - 1)
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    if (riverPath[i].Neighbors[j] != null
-                        && _rivers[^2].coordinates == riverPath[i].Neighbors[j].Coordinates)
-                    {
-                        _rivers[^1].neighbors[j] = _rivers[^2];
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                for (int j = 0; j < 4; j++)
-                {
-                    if (riverPath[i].Neighbors[j] != null)
-                    {
-                        if (_rivers[startIndex + i - 1].coordinates == riverPath[i].Neighbors[j].Coordinates)
-                        {
-                            _rivers[startIndex + i].neighbors[j] = _rivers[startIndex + i - 1];
-                        }
-                        if (_rivers[startIndex + i + 1].coordinates == riverPath[i].Neighbors[j].Coordinates)
-                        {
-                            _rivers[startIndex + i].neighbors[j] = _rivers[startIndex + i + 1];
-                        }
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
-    private Border SetRiverDirection(Border border)
-    {
-        float min = border.Altitude;
-        int index = -1;
-        for (int i = 0; i < 4; i++)
-        {
-            if (border.Neighbors[i] != null && border.Neighbors[i].Altitude < min
-                                            && !_riverUsed.Contains(border.Neighbors[i])
-                                            && !_riverTempUsed.Contains(border.Neighbors[i])
-                                            && border.Neighbors[i].Cell1.terrain != Terrain.Water
-                                            && border.Neighbors[i].Cell2.terrain != Terrain.Water)
-            {
-                min = border.Neighbors[i].Altitude;
-                index = i;
-            }
-        }
-        if (index == -1)
-        {
-            return null;
-        }
-        return border.Neighbors[index];
-    }
-    
-    private void UseBordersInRadius(Border border, int radius)
-    {
-        if (radius < 0)
-        {
-            return;
-        }
-        _riverUsed.Add(border);
-        _riverSources.Remove(border);
-        foreach (Border neighbor in border.Neighbors)
-        {
-            if (neighbor != null)
-            {
-                UseBordersInRadius(neighbor, radius - 1);
-            }
-        }
-    }
-
-    private void GenerateResources()
-    {
-        int random;
-        GameObject resource;
-        Vector2 position;
-        foreach (GameObject cell in _cells)
-        {
-            random = Random.Range(0, 100);
-            resource = null;
-            position = cell.GetComponent<Transform>().position;
-            switch (cell.GetComponent<Cell>().terrain)
-            {
-                case Terrain.Water:
-                    if (random < waterFish)
-                    {
-                        resource = Instantiate(resourcesPrefabs[2],
-                            new Vector3(position.x, position.y, -1), Quaternion.identity,
-                            transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Fish;
-                    }
-                    break;
-                case Terrain.Desert:
-                    if (random < desertStone)
-                    {
-                        resource = Instantiate(resourcesPrefabs[4],
-                            new Vector3(position.x, position.y, -1), Quaternion.identity,
-                            transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Stone;
-                    }
-                    else if (random < desertGold)
-                    {
-                        resource = Instantiate(resourcesPrefabs[5],
-                            new Vector3(position.x, position.y, -1), Quaternion.identity,
-                            transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Gold;
-                    }
-                    break;
-                case Terrain.Floodplain:
-                    if (random < floodplainWheat)
-                    {
-                        resource = Instantiate(resourcesPrefabs[0], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Wheat;
-                    }
-                    else if (random < floodplainCattle)
-                    {
-                        resource = Instantiate(resourcesPrefabs[1], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Cattle;
-                    }
-                    else if (random < floodplainHorses)
-                    {
-                        resource = Instantiate(resourcesPrefabs[6], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Horses;
-                    }
-                    break;
-                case Terrain.Plain:
-                    if (random < plainWheat)
-                    {
-                        resource = Instantiate(resourcesPrefabs[0], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Wheat;
-                    }
-                    else if (random < plainCattle)
-                    {
-                        resource = Instantiate(resourcesPrefabs[1], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Cattle;
-                    }
-                    else if (random < plainStone)
-                    {
-                        resource = Instantiate(resourcesPrefabs[4], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Stone;
-                    }
-                    else if (random < plainGold)
-                    {
-                        resource = Instantiate(resourcesPrefabs[5], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Gold;
-                    }
-                    else if (random < plainHorses)
-                    {
-                        resource = Instantiate(resourcesPrefabs[6], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Horses;
-                    }
-                    break;
-                case Terrain.Forest:
-                    if (random < forestWood)
-                    {
-                        resource = Instantiate(resourcesPrefabs[3], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Wood;
-                    }
-                    break;
-                case Terrain.DesertHills:
-                    if (random < desertHillsStone)
-                    {
-                        resource = Instantiate(resourcesPrefabs[4], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Stone;
-                    }
-                    else if (random < desertHillsGold)
-                    {
-                        resource = Instantiate(resourcesPrefabs[5], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Gold;
-                    }
-                    else if (random < desertHillsCopper)
-                    {
-                        resource = Instantiate(resourcesPrefabs[7], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Copper;
-                    }
-                    else if (random < desertHillsIron)
-                    {
-                        resource = Instantiate(resourcesPrefabs[8], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Iron;
-                    }
-                    break;
-                case Terrain.Hills:
-                    if (random < hillsStone)
-                    {
-                        resource = Instantiate(resourcesPrefabs[4], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Stone;
-                    }
-                    else if (random < hillsGold)
-                    {
-                        resource = Instantiate(resourcesPrefabs[5], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Gold;
-                    }
-                    else if (random < hillsCattle)
-                    {
-                        resource = Instantiate(resourcesPrefabs[1], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Cattle;
-                    }
-                    else if (random < hillsCopper)
-                    {
-                        resource = Instantiate(resourcesPrefabs[7], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Copper;
-                    }
-                    else if (random < hillsIron)
-                    {
-                        resource = Instantiate(resourcesPrefabs[8], new Vector3(position.x, position.y, -1),
-                            Quaternion.identity, transform);
-                        cell.GetComponent<Cell>().resourceType = ResourceType.Iron;
-                    }
-                    break;
-            }
-            if (resource != null)
-            {
-                resource.SetActive(false);
-                cell.GetComponent<Cell>().resource = resource;
-            }
-        }
-    }
-
-    private void GenerateCivilizations()
-    {
-        CivilizationName[] names = (CivilizationName[])Enum.GetValues(typeof(CivilizationName));
-        int index = Array.IndexOf(names, GameLogic.SelectedCiv);
-        CivilizationName temp = names[index];
-        Array.Copy(names, 0, names, 1, index);
-        names[0] = temp;
-        List<Cell> spawnCells = new List<Cell>();
-        foreach (GameObject go in _cells)
-        {
-            Cell cell = go.GetComponent<Cell>();
-            if (cell.rivers.Count > 0 && cell.terrain != Terrain.Hills && cell.terrain != Terrain.DesertHills)
-            {
-                spawnCells.Add(cell.GetComponent<Cell>());
-            }
-        }
-        int random;
-        Cell selectedCell;
-        int riverId;
-        List<Cell> path;
-        float distance;
-        for (int i = 0; i < names.Length; i++)
-        {
-            GameLogic.Civs[i] = new Civilization(names[i]);
-            random = Random.Range(0, spawnCells.Count);
-            selectedCell = spawnCells[random];
-            riverId = selectedCell.rivers[0].id;
-            CreateUnit(UnitType.Settler, selectedCell, GameLogic.Civs[i]);
-            for (int j = spawnCells.Count - 1; j >= 0; j--)
-            {
-                path = Pathfinder.FindPath(selectedCell, spawnCells[j], true,
-                    float.PositiveInfinity, GameLogic.SelectedCiv, null);
-                if (path != null)
-                {
-                    distance = Pathfinder.CalculateTotalPathLength(path, false);
-                }
-                else
-                {
-                    distance = 0;
-                }
-                if (spawnCells[j].rivers[0].id == riverId || distance < 20)
-                {
-                    spawnCells.RemoveAt(j);
-                }
-            }
-            if (i != 0)
-            {
-                GameLogic.AIs[i - 1] = new AI(this, GameLogic.Civs[i]);
-            }
-        }
-        _focusedObject = GameLogic.Civs[0].Units[0].gameObject;
     }
 
     public Cell SelectCellForNewUnit(City city)
@@ -2440,20 +1744,20 @@ public class Map : MonoBehaviour
         }
     }
     
-    public void CreateCity(CityData cityData, Cell cell, Civilization civ)
+    public void CreateCity(CityData cityData, Cell cityCell, Civilization civ)
     {
-        Vector2 position = cell.transform.position;
+        Vector2 position = cityCell.transform.position;
         City city = Instantiate(cityPrefab, new Vector3(position.x, position.y, -3), 
             Quaternion.identity, transform).GetComponent<City>();
         HashSet<Cell> cells = new HashSet<Cell>();
-        foreach (GameObject go in _cells)
+        foreach (Cell cell in Cells)
         {
-            if (cityData.CellsCoordinates.Contains(go.GetComponent<Cell>().offsetCoordinates))
+            if (cityData.CellsCoordinates.Contains(cell.offsetCoordinates))
             {
-                cells.Add(go.GetComponent<Cell>());
+                cells.Add(cell);
             }
         }
-        city.Init(cityData, cell, cells, civ);
+        city.Init(cityData, cityCell, cells, civ);
         civ.Cities.Add(city);
         if (civ.Cities.Count == 1)
         {
@@ -2464,7 +1768,7 @@ public class Map : MonoBehaviour
         if (civ.Name != GameLogic.SelectedCiv)
         {
             GameLogic.Civs[0].CreateFogOfWar();
-            if (!GameLogic.Civs[0].ExploredCells.Contains(cell))
+            if (!GameLogic.Civs[0].ExploredCells.Contains(cityCell))
             {
                 city.gameObject.SetActive(false);
             }

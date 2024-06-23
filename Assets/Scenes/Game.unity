@@ -6092,6 +6092,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1293693305}
   - component: {fileID: 1293693304}
+  - component: {fileID: 1293693306}
   m_Layer: 0
   m_Name: Map
   m_TagString: Untagged
@@ -6111,59 +6112,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2456e17c1da822b4eb23cbcbfb582918, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  generator: {fileID: 1293693306}
   uiController: {fileID: 519420034}
-  size: {x: 93, y: 61}
   cellPrefab: {fileID: 7394691248911625112, guid: 96a6d970191610e46a7e31f168951f72, type: 3}
   phantomCellPrefab: {fileID: 1726830274830725331, guid: 2bc8f155673d50f41a16e2ec672b1a61, type: 3}
   cityPrefab: {fileID: 674910826325683268, guid: dbb10dd4d35a89e40b4d9c37fd0c5a15, type: 3}
-  altitudeA: 0.3
-  altitudeB: 0.5
-  altitudeC: 2
-  altitudeScale: 20
-  humidityScale: 10
-  waterMinAltitude: 0
-  waterMaxAltitude: 50
-  waterMinHumidity: 0
-  waterMaxHumidity: 100
+  riverPrefab: {fileID: 9097049239413821737, guid: 2bd34f4498933f343b87b2513c6abeb5, type: 3}
+  size: {x: 93, y: 61}
+  rivers: []
+  cellOffsets: []
+  riverOffsets: []
   waterCost: 0
-  desertMinAltitude: 50
-  desertMaxAltitude: 85
-  desertMinHumidity: 0
-  desertMaxHumidity: 15
   desertCost: 2
   floodplainCost: 1
-  plainMinAltitude: 50
-  plainMaxAltitude: 85
-  plainMinHumidity: 15
-  plainMaxHumidity: 70
   plainCost: 1
-  forestMinAltitude: 50
-  forestMaxAltitude: 85
-  forestMinHumidity: 70
-  forestMaxHumidity: 100
   forestCost: 2
-  desertHillsMinAltitude: 85
-  desertHillsMaxAltitude: 97
-  desertHillsMinHumidity: 0
-  desertHillsMaxHumidity: 15
   desertHillsCost: 3
-  hillsMinAltitude: 85
-  hillsMaxAltitude: 97
-  hillsMinHumidity: 15
-  hillsMaxHumidity: 100
   hillsCost: 2
-  mountainsMinAltitude: 97
-  mountainsMaxAltitude: 100
-  mountainsMinHumidity: 0
-  mountainsMaxHumidity: 100
   mountainsCost: 0
-  riverMaxCount: 12
-  riverBetweenMinDistance: 8
-  riverGenAttempts: 10
   riverCost: 0
-  riverPrefab: {fileID: 9097049239413821737, guid: 2bd34f4498933f343b87b2513c6abeb5, type: 3}
-  riverSourcesMinAltitude: 85
-  riverSourcesMaxAltitude: 97
   resourcesPrefabs:
   - {fileID: 8892125240806765516, guid: 604205ed5eb496f45ade12fe6bcb6573, type: 3}
   - {fileID: 3594785612712922806, guid: 10a0590d7cc2eca42bb90d860b189ccc, type: 3}
@@ -6174,27 +6141,6 @@ MonoBehaviour:
   - {fileID: 8604891378501482238, guid: bf882ec4abb5e15448b0ee5a4342be33, type: 3}
   - {fileID: 6545971334738428076, guid: 72b492b4984555340a5ba134236b1222, type: 3}
   - {fileID: 317893590788551198, guid: 01092260fc2dd334cbc49223779e26d5, type: 3}
-  waterFish: 25
-  desertStone: 8
-  desertGold: 16
-  floodplainWheat: 8
-  floodplainCattle: 16
-  floodplainHorses: 20
-  plainWheat: 5
-  plainCattle: 10
-  plainStone: 14
-  plainGold: 18
-  plainHorses: 20
-  forestWood: 25
-  desertHillsStone: 5
-  desertHillsGold: 10
-  desertHillsCopper: 13
-  desertHillsIron: 16
-  hillsStone: 5
-  hillsGold: 10
-  hillsCattle: 14
-  hillsCopper: 17
-  hillsIron: 20
   egyptUnitsPrefabs:
   - {fileID: 1002092645564396949, guid: a8e4032d9181749418420dd3a6ccc267, type: 3}
   - {fileID: 7222177055799904977, guid: b4036f4c578e8044787bb862e6b0e613, type: 3}
@@ -6400,6 +6346,78 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1293693306
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1293693303}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4d3ed33e978d4a01b88d5f333d67117a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  map: {fileID: 1293693304}
+  altitudeA: 0.3
+  altitudeB: 0.5
+  altitudeC: 2
+  altitudeScale: 20
+  humidityScale: 10
+  waterMinAltitude: 0
+  waterMaxAltitude: 50
+  waterMinHumidity: 0
+  waterMaxHumidity: 100
+  desertMinAltitude: 50
+  desertMaxAltitude: 85
+  desertMinHumidity: 0
+  desertMaxHumidity: 15
+  plainMinAltitude: 50
+  plainMaxAltitude: 85
+  plainMinHumidity: 15
+  plainMaxHumidity: 70
+  forestMinAltitude: 50
+  forestMaxAltitude: 85
+  forestMinHumidity: 70
+  forestMaxHumidity: 100
+  desertHillsMinAltitude: 85
+  desertHillsMaxAltitude: 97
+  desertHillsMinHumidity: 0
+  desertHillsMaxHumidity: 15
+  hillsMinAltitude: 85
+  hillsMaxAltitude: 97
+  hillsMinHumidity: 15
+  hillsMaxHumidity: 100
+  mountainsMinAltitude: 97
+  mountainsMaxAltitude: 100
+  mountainsMinHumidity: 0
+  mountainsMaxHumidity: 100
+  riverMaxCount: 12
+  riverBetweenMinDistance: 8
+  riverGenAttempts: 10
+  riverSourcesMinAltitude: 85
+  riverSourcesMaxAltitude: 97
+  waterFish: 25
+  desertStone: 8
+  desertGold: 16
+  floodplainWheat: 8
+  floodplainCattle: 16
+  floodplainHorses: 20
+  plainWheat: 5
+  plainCattle: 10
+  plainStone: 14
+  plainGold: 18
+  plainHorses: 20
+  forestWood: 25
+  desertHillsStone: 5
+  desertHillsGold: 10
+  desertHillsCopper: 13
+  desertHillsIron: 16
+  hillsStone: 5
+  hillsGold: 10
+  hillsCattle: 14
+  hillsCopper: 17
+  hillsIron: 20
 --- !u!1 &1371789918
 GameObject:
   m_ObjectHideFlags: 0
