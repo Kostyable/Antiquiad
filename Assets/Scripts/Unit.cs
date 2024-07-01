@@ -138,6 +138,10 @@ public class Unit : MonoBehaviour
     public void CreateBorders()
     {
         ReachableCells = Pathfinder.FindReachableCells(currentCell, currentMovePoints, Owner.ExploredCells);
+        if (ReachableCells.Count == 1)
+        {
+            return;
+        }
         foreach (Cell cell in ReachableCells)
         {
             for (int i = 0; i < cell.neighbors.Length; i++)
@@ -189,8 +193,7 @@ public class Unit : MonoBehaviour
             }
             if (GameLogic.Civs[0].Units.Count == 0 && GameLogic.Civs[0].Cities.Count == 0 && !Map.MenuEnabled)
             {
-                GameLogic.Result = false;
-                SceneManager.LoadScene("Game Over");
+                GameObject.Find("Main Camera").GetComponent<GameOverController>().ShowResult(false);
             }
         }
     }

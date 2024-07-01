@@ -97,6 +97,14 @@ public static class Pathfinder
     
     public static HashSet<Cell> FindReachableCells(Cell start, float movePoints, HashSet<Cell> exploredCells)
     {
+        if (start.unit != null)
+        {
+            _unit = start.unit;
+        }
+        else
+        {
+            _unit = null;
+        }
         HashSet<Cell> reachableCells = new HashSet<Cell>();
         List<Cell> openSet = new List<Cell>();
         Dictionary<Cell, float> gScore = new Dictionary<Cell, float>();

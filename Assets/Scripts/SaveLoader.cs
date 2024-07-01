@@ -37,7 +37,6 @@ public class SaveLoader : MonoBehaviour
             Camera.main.orthographicSize = ES3.Load<float>("cameraSize");
         }
         GameLogicData gameLogicData = ES3.Load<GameLogicData>("gameLogic");
-        GameLogic.Result = null;
         GameLogic.SelectedCiv = gameLogicData.selectedCiv;
         GameLogic.Civs = new Civilization[gameLogicData.civs.Length];
         GameLogic.AIs = new AI[gameLogicData.civs.Length - 1];

@@ -14,6 +14,7 @@ public class City : MonoBehaviour
     [SerializeField] private Sprite[] mesopotamiaUnitsSprites;
     public string cityName;
     public Civilization Owner;
+    public bool isCapital;
     public Cell coreCell;
     public HashSet<Cell> Cells;
     public HashSet<Cell> CellsInSight;
@@ -32,6 +33,7 @@ public class City : MonoBehaviour
         CityData data = new CityData();
         data.cityName = cityName;
         data.owner = Owner.Name;
+        data.isCapital = isCapital;
         data.coreCellCoordinates = coreCell.offsetCoordinates;
         data.CellsCoordinates = new HashSet<Vector2Int>();
         foreach (Cell cell in Cells)
@@ -50,12 +52,13 @@ public class City : MonoBehaviour
         return data;
     }
     
-    public void Init(Cell cell, Civilization owner)
+    public void Init(Cell cell, Civilization owner, bool isCapitalCity)
     {
         healthPoints = 20;
         currentHealthPoints = healthPoints;
-        defence = 5;
+        defence = 0;
         Owner = owner;
+        isCapital = isCapitalCity;
         SetCityName();
         Destroy(cell.resource);
         cell.resourceType = ResourceType.None;
@@ -69,6 +72,10 @@ public class City : MonoBehaviour
             }
         }
         Cells = cell.GetCellsInRadius(1, false);
+        foreach (Cell c in Cells)
+        {
+            c.Owner = Owner;
+        }
         CellsInSight = new HashSet<Cell>();
         ResourcesCount = new Dictionary<ResourceType, int>
         {
@@ -107,8 +114,13 @@ public class City : MonoBehaviour
     {
         cityName = cityData.cityName;
         Owner = owner;
+        isCapital = cityData.isCapital;
         coreCell = cell;
         Cells = cells;
+        foreach (Cell c in Cells)
+        {
+            c.Owner = Owner;
+        }
         CellsInSight = new HashSet<Cell>();
         ResourcesCount = cityData.ResourcesCount;
         ResourcesModifiers = cityData.ResourcesModifiers;
@@ -131,17 +143,26 @@ public class City : MonoBehaviour
         currentHealthPoints -= damage;
         if (currentHealthPoints <= 0)
         {
-            if (this == GameLogic.Civs[0].Cities[0])
+            foreach (Cell cell in Cells)
             {
-                GameLogic.Result = false;
-                SceneManager.LoadScene("Game Over");
+                cell.Owner = civ;
+            }
+            if (Owner == GameLogic.Civs[0] && isCapital)
+            {
+                GameObject.Find("Main Camera").GetComponent<GameOverController>().ShowResult(false);
             }
             for (int i = 1; i < GameLogic.Civs.Length; i++)
             {
-                if (this == GameLogic.Civs[i].Cities[0])
+                if (Owner == GameLogic.Civs[i] && isCapital)
                 {
-                    GameLogic.Result = true;
-                    SceneManager.LoadScene("Game Over");
+                    if (civ.Name == GameLogic.SelectedCiv)
+                    {
+                        GameObject.Find("Main Camera").GetComponent<GameOverController>().ShowResult(true);
+                    }
+                    else
+                    {
+                        GameObject.Find("Main Camera").GetComponent<GameOverController>().ShowResult(false);
+                    }
                 }
             }
             if (Buildings.Contains(BuildingType.Walls))
@@ -352,6 +373,7 @@ public class City : MonoBehaviour
         else
         {
             Cell cell = expansionCells.ToList()[Random.Range(0, expansionCells.Count)];
+            cell.Owner = Owner;
             Cells.Add(cell);
             SetCellsInSight();
             Owner.OwnedCells.UnionWith(Cells);

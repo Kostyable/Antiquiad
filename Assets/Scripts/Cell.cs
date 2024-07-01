@@ -16,6 +16,7 @@ public class Cell : MonoBehaviour
     public GameObject resource;
     public Cell[] neighbors;
     public List<River> rivers;
+    public Civilization Owner;
     public Unit unit;
     public City city;
     
@@ -216,7 +217,7 @@ public class Cell : MonoBehaviour
         {
             city.gameObject.GetComponent<SpriteRenderer>().color = city.Owner.MainColor;
             city.transform.GetChild(0).gameObject.SetActive(true);
-            if (city == city.Owner.Cities[0])
+            if (city.isCapital)
             {
                 city.transform.GetChild(1).gameObject.GetComponent<SpriteRenderer>().color = city.Owner.AdditionalColor;
             }
@@ -277,7 +278,7 @@ public class Cell : MonoBehaviour
             city.gameObject.GetComponent<SpriteRenderer>().color = Color.Lerp(city.Owner.MainColor, grayColor,
                 0.5f);
             city.transform.GetChild(0).gameObject.SetActive(false);
-            if (city == city.Owner.Cities[0])
+            if (city.isCapital)
             {
                 city.transform.GetChild(1).gameObject.GetComponent<SpriteRenderer>().color
                     = Color.Lerp(city.Owner.AdditionalColor, grayColor, 0.5f);

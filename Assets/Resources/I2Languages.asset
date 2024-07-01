@@ -93,8 +93,8 @@ MonoBehaviour:
       TermType: 0
       Description: 
       Languages:
-      - You {[RESULT]}!
-      - "\u0412\u044B {[RESULT]}!"
+      - You {[RESULT]}
+      - "\u0412\u044B {[RESULT]}"
       Flags: 0000
       Languages_Touch: []
     - Term: win
@@ -1157,6 +1157,14 @@ MonoBehaviour:
       Languages:
       - Quit To Menu
       - "\u0412\u044B\u0439\u0442\u0438 \u0412 \u041C\u0435\u043D\u044E"
+      Flags: 0000
+      Languages_Touch: []
+    - Term: winner
+      TermType: 0
+      Description: 
+      Languages:
+      - 'Winner: {[WINNER]}'
+      - "\u041F\u043E\u0431\u0435\u0434\u0438\u0442\u0435\u043B\u044C: {[WINNER]}"
       Flags: 0000
       Languages_Touch: []
     CaseInsensitiveTerms: 0

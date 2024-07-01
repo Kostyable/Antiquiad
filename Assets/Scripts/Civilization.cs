@@ -181,7 +181,7 @@ public class Civilization
                                                   * city.ResourcesModifiers[ResourceType.Copper]);
             ResourcesAdds[ResourceType.Iron] += (int)(city.ResourcesCount[ResourceType.Iron]
                                                   * city.ResourcesModifiers[ResourceType.Iron]);
-            if (city == Cities[0])
+            if (city.isCapital)
             {
                 ResourcesAdds[ResourceType.Food] += GameLogic.CapitalModifier;
             }

@@ -357,6 +357,10 @@ public class Map : MonoBehaviour
         {
             uiController.UpdateUnitInfo(SelectedUnit);
         }
+        if (SelectedCity != null)
+        {
+            uiController.UpdateCityInfo(SelectedCity);
+        }
         if (!IsMouseOverUI())
         {
             if (Application.platform == RuntimePlatform.WindowsPlayer
@@ -1506,9 +1510,16 @@ public class Map : MonoBehaviour
         Vector2 position = settler.currentCell.transform.position;
         City city = Instantiate(cityPrefab, new Vector3(position.x, position.y, -3), 
             Quaternion.identity, transform).GetComponent<City>();
-        city.Init(settler.currentCell, settler.Owner);
+        if (settler.Owner.Cities.Count == 0)
+        {
+            city.Init(settler.currentCell, settler.Owner, true);
+        }
+        else
+        {
+            city.Init(settler.currentCell, settler.Owner, false);
+        }
         settler.Owner.Cities.Add(city);
-        if (settler.Owner.Cities.Count == 1)
+        if (city.isCapital)
         {
             city.DrawCapital();
         }
@@ -1540,7 +1551,7 @@ public class Map : MonoBehaviour
         }
         city.Init(cityData, cityCell, cells, civ);
         civ.Cities.Add(city);
-        if (civ.Cities.Count == 1)
+        if (city.isCapital)
         {
             city.DrawCapital();
         }

@@ -2,21 +2,25 @@ using UnityEngine;
 using TMPro;
 using I2.Loc;
 
-public class Result : MonoBehaviour
+public class GameOverController : MonoBehaviour
 {
+    [SerializeField] private GameObject uiCanvas;
+    [SerializeField] private GameObject gameOverCanvas;
     [SerializeField] private TextMeshProUGUI result;
-    void Start()
+    [SerializeField] private TextMeshProUGUI winner;
+    
+    public void ShowResult(bool gameResult)
     {
-        if (GameLogic.Result == true)
+        gameOverCanvas.SetActive(true);
+        if (gameResult)
         {
             result.GetComponent<LocalizationParamsManager>().SetParameterValue
                 ("RESULT", LocalizationManager.GetTranslation("win"));
         }
-        else if (GameLogic.Result == false)
+        else
         {
             result.GetComponent<LocalizationParamsManager>().SetParameterValue
                 ("RESULT", LocalizationManager.GetTranslation("lose"));
         }
-        GameLogic.Result = null;
     }
 }

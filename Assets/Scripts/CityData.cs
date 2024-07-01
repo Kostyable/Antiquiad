@@ -7,6 +7,7 @@ public class CityData
 {
     public string cityName;
     public CivilizationName owner;
+    public bool isCapital;
     public Vector2Int coreCellCoordinates;
     public HashSet<Vector2Int> CellsCoordinates;
     public Dictionary<ResourceType, int> ResourcesCount;

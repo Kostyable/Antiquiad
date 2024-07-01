@@ -62,7 +62,7 @@ public class UIController : MonoBehaviour
     [Space(10)]
     [SerializeField] private Sprite[] civilizationsEmblems;
     
-    void Start()
+    private void Start()
     {
         GameObject.Find("Turn Value").GetComponent<LocalizationParamsManager>().SetParameterValue
             ("TURN VALUE", GameLogic.Turn.ToString());
@@ -298,6 +298,11 @@ public class UIController : MonoBehaviour
             unitDesc.transform.GetChild(4).GetComponent<TextMeshProUGUI>().text
                 = ((CombatUnit)unit).healthPoints.ToString();
         }
+    }
+    
+    public void UpdateCityInfo(City city)
+    {
+        cityDesc.transform.GetChild(0).GetComponent<TextMeshProUGUI>().text = city.currentHealthPoints.ToString();
     }
 
     public void UnselectObject()

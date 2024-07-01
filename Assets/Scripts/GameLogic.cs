@@ -4,7 +4,6 @@ public static class GameLogic
 {
     public static CivilizationName SelectedCiv;
     public static bool Tutorial;
-    public static bool? Result;
     public static bool LoadGame;
     public static Civilization[] Civs;
     public static AI[] AIs;
@@ -93,7 +92,7 @@ public static class GameLogic
                     * city.ResourcesModifiers[ResourceType.Wheat] + city.ResourcesCount[ResourceType.Cattle]
                     * city.ResourcesModifiers[ResourceType.Cattle] + city.ResourcesCount[ResourceType.Fish]
                     * city.ResourcesModifiers[ResourceType.Fish]);
-                if (city == civ.Cities[0])
+                if (city.isCapital)
                 {
                     cityFoodCount += CapitalModifier;
                 }

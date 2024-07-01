@@ -280,6 +280,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: e9c8775ccf5397141a6922c35f2de562, type: 3}
   - {fileID: 21300000, guid: 93aaaa83ebe986b4399d21f87f88a756, type: 3}
   cityName: 
+  isCapital: 0
   coreCell: {fileID: 0}
   totalFoodCount: 0
   healthPoints: 0
